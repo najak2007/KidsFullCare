@@ -59,9 +59,9 @@ function SignUp() {
 
   return (
     <div className="signup-page">
-      <div className="signup-blob blob-1" />
+{/*      <div className="signup-blob blob-1" />
       <div className="signup-blob blob-2" />
-      <div className="signup-blob blob-3" />
+      <div className="signup-blob blob-3" /> */}
 
       <div className="signup-card">
         <header className="signup-header">
