@@ -1,0 +1,77 @@
+/* 기존 SignUp.css 하단에 추가하세요 */
+
+.auth-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.apple-signin-btn,
+.google-signin-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 44px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.apple-signin-btn {
+  background: #000;
+  color: #fff;
+}
+
+.google-signin-btn {
+  background: #fff;
+  color: #1f1f1f;
+  border: 1px solid #dadce0;
+}
+
+.apple-signin-btn:disabled,
+.google-signin-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.apple-signin-btn:hover:not(:disabled),
+.google-signin-btn:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.manual-entry-btn {
+  width: 100%;
+  height: 40px;
+  background: transparent;
+  color: #888;
+  border: none;
+  font-size: 14px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.manual-entry-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.manual-name-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.signup-progress-text {
+  margin-top: 12px;
+  text-align: center;
+  font-size: 13px;
+  color: #999;
+}
