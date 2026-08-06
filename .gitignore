@@ -10,8 +10,8 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
-build
-.firebase
+build/
+.firebase/
 *.local
 
 # Editor directories and files
@@ -24,3 +24,16 @@ build
 *.njsproj
 *.sln
 *.sw?
+
+.npm
+.node_repl_history
+.eslintcache
+.lock-wscript
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+firebase-debug.log*
+firebase-debug.*.log*
+
+
