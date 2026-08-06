@@ -162,6 +162,11 @@ function SignUp() {
       setError(payload?.message || "로그인 중 오류가 발생했습니다.");
     };
 
+    window.onNativeSignInCancel = () => {
+      // payload: { provider }
+      setNativeAuthLoading(null);
+    }
+
     return () => {
       delete window.onNativeAppleSignIn;
       delete window.onNativeGoogleSignIn;
