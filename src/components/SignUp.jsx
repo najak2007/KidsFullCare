@@ -297,7 +297,7 @@ function SignUp() {
                   disabled={nativeAuthLoading !== null}
                 >
                   <AppleLogo />
-                  <span>{nativeAuthLoading === "apple" ? "처리 중..." : "Apple로 계속하기"}</span>
+                  <span>{nativeAuthLoading === "apple" ? "처리 중..." : "Apple 계정으로 가입"}</span>
                 </button>
               )}
 
@@ -309,7 +309,7 @@ function SignUp() {
                   disabled={nativeAuthLoading !== null}
                 >
                   <GoogleLogo />
-                  <span>{nativeAuthLoading === "google" ? "처리 중..." : "Google로 계속하기"}</span>
+                  <span>{nativeAuthLoading === "google" ? "처리 중..." : "Google 계정으로 가입"}</span>
                 </button>
               )}
 
