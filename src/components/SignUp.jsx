@@ -171,6 +171,7 @@ function SignUp() {
       delete window.onNativeAppleSignIn;
       delete window.onNativeGoogleSignIn;
       delete window.onNativeSignInError;
+      delete window.onNativeSignInCancel;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [name]);
