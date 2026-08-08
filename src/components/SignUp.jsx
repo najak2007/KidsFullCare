@@ -8,7 +8,6 @@ import {
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "../firebase";
 import "../css/SignUp.css";
-import "../css/SignUp-apple-addon.css";
 
 // 단계 순서
 // 0. auth  : Apple / Google / 직접 입력 중 선택 → 이름·이메일 확보
@@ -71,7 +70,7 @@ function usePlatform() {
   return platform;
 }
 
-function SignUp() {
+function SignUp({ initialAuthUser = null }) {
   const platform = usePlatform();
 
   const [stepIndex, setStepIndex] = useState(0);
@@ -94,6 +93,31 @@ function SignUp() {
   useEffect(() => {
     if (showManualNameInput) nameInputRef.current?.focus();
   }, [showManualNameInput]);
+
+  // 이미 Firebase Auth 로그인은 되어 있지만(App.jsx의 useAuthUser 참고)
+  // Firestore에 프로필(역할 포함)이 없는 경우 → 로그인 단계는 건너뛰고
+  // 바로 역할 선택(Step 1)부터 이어서 진행합니다.
+  useEffect(() => {
+    if (!initialAuthUser) return;
+
+    const providerId = initialAuthUser.providerData?.[0]?.providerId || "";
+    const method = providerId.includes("apple")
+      ? "apple"
+      : providerId.includes("google")
+      ? "google"
+      : "manual";
+
+    setSocialUser({
+      uid: initialAuthUser.uid,
+      name: initialAuthUser.displayName || "",
+      email: initialAuthUser.email || "",
+    });
+    setAuthMethod(method);
+    setName(initialAuthUser.displayName || "");
+    setEmail(initialAuthUser.email || "");
+    setStepIndex(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialAuthUser]);
 
   const goNext = () => setStepIndex((i) => Math.min(i + 1, STEPS.length - 1));
   const goToRoleStep = () => setStepIndex(1);
@@ -162,16 +186,10 @@ function SignUp() {
       setError(payload?.message || "로그인 중 오류가 발생했습니다.");
     };
 
-    window.onNativeSignInCancel = () => {
-      // payload: { provider }
-      setNativeAuthLoading(null);
-    }
-
     return () => {
       delete window.onNativeAppleSignIn;
       delete window.onNativeGoogleSignIn;
       delete window.onNativeSignInError;
-      delete window.onNativeSignInCancel;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [name]);
@@ -297,7 +315,7 @@ function SignUp() {
                   disabled={nativeAuthLoading !== null}
                 >
                   <AppleLogo />
-                  <span>{nativeAuthLoading === "apple" ? "처리 중..." : "Apple 계정으로 가입"}</span>
+                  <span>{nativeAuthLoading === "apple" ? "처리 중..." : "Apple로 계속하기"}</span>
                 </button>
               )}
 
@@ -309,7 +327,7 @@ function SignUp() {
                   disabled={nativeAuthLoading !== null}
                 >
                   <GoogleLogo />
-                  <span>{nativeAuthLoading === "google" ? "처리 중..." : "Google 계정으로 가입"}</span>
+                  <span>{nativeAuthLoading === "google" ? "처리 중..." : "Google로 계속하기"}</span>
                 </button>
               )}
 
