@@ -18,6 +18,7 @@ function App() {
   // 로그인 + Firestore 프로필(가입)까지 완료된 상태 → 바로 메인 화면으로
   if (authUser && profile) {
     // return <MainApp role={profile.role} user={authUser} />;
+    <div>로그아웃 상태인데..... authUser: {authUser.uid}</div>;
     return <div>메인 화면 (role: {profile.role})</div>;
   }
 

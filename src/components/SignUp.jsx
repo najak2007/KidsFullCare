@@ -15,6 +15,10 @@ import { useState, useEffect, useCallback } from "react";
 import "../css/SignUp.css";
 import "../css/SignUp-apple-addon.css";
 
+/* ------------------------------------------------------------
+ * 네이티브 브릿지
+ * ------------------------------------------------------------ */
+
 function requestNativeAppleSignIn() {
   if (window.webkit?.messageHandlers?.appleSignIn) {
     window.webkit.messageHandlers.appleSignIn.postMessage(null);
@@ -45,6 +49,37 @@ function requestNativeSaveRole(role) {
   }
 }
 
+function requestNativeEmailSignUp(email, password) {
+  if (window.webkit?.messageHandlers?.emailSignUp) {
+    window.webkit.messageHandlers.emailSignUp.postMessage({ email, password });
+  } else if (window.AndroidBridge?.emailSignUp) {
+    window.AndroidBridge.emailSignUp(email, password);
+  } else {
+    console.warn("Native 이메일 가입 브릿지를 찾을 수 없습니다.");
+  }
+}
+
+function requestNativeEmailSignIn(email, password) {
+  if (window.webkit?.messageHandlers?.emailSignIn) {
+    window.webkit.messageHandlers.emailSignIn.postMessage({ email, password });
+  } else if (window.AndroidBridge?.emailSignIn) {
+    window.AndroidBridge.emailSignIn(email, password);
+  } else {
+    console.warn("Native 이메일 로그인 브릿지를 찾을 수 없습니다.");
+  }
+}
+
+function notifyNativeReady() {
+  // JS 리스너 등록이 끝났으니, 네이티브가 알고 있는 최신 상태를 다시 보내달라고 요청합니다.
+  // (didFinish navigation 시점과 React 마운트 시점의 타이밍이 어긋나 상태를
+  //  못 받는 경우를 막기 위한 핸드셰이크입니다.)
+  if (window.webkit?.messageHandlers?.jsReady) {
+    window.webkit.messageHandlers.jsReady.postMessage(null);
+  } else if (window.AndroidBridge?.notifyReady) {
+    window.AndroidBridge.notifyReady();
+  }
+}
+
 function usePlatform() {
   const [platform] = useState(() => {
     if (typeof navigator === "undefined") return "web";
@@ -56,6 +91,33 @@ function usePlatform() {
   return platform;
 }
 
+/* ------------------------------------------------------------
+ * 네이티브 에러 코드 → 사용자 메시지
+ * (Swift 쪽에서 auth/xxx 형태의 code를 함께 보내줍니다)
+ * ------------------------------------------------------------ */
+function convertAuthErrorCode(code, fallbackMessage) {
+  switch (code) {
+    case "auth/email-already-in-use":
+      return "이미 사용 중인 이메일입니다.";
+    case "auth/invalid-email":
+      return "올바른 이메일 형식이 아닙니다.";
+    case "auth/weak-password":
+      return "비밀번호는 6자 이상이어야 합니다.";
+    case "auth/wrong-password":
+      return "비밀번호가 올바르지 않습니다.";
+    case "auth/user-not-found":
+      return "가입되지 않은 이메일입니다.";
+    case "auth/user-disabled":
+      return "비활성화된 계정입니다.";
+    case "auth/invalid-credential":
+      return "이메일 또는 비밀번호가 올바르지 않습니다.";
+    case "auth/account-exists-with-different-credential":
+      return "이미 다른 방식으로 가입된 이메일입니다.";
+    default:
+      return fallbackMessage || "오류가 발생했습니다.";
+  }
+}
+
 function SignUp() {
   const platform = usePlatform();
 
@@ -64,7 +126,14 @@ function SignUp() {
   const [name, setName] = useState("");
   const [role, setRole] = useState(null);
   const [error, setError] = useState("");
-  const [nativeLoading, setNativeLoading] = useState(null); // "apple" | "google" | "role" | null
+  const [nativeLoading, setNativeLoading] = useState(null); // "apple" | "google" | "role" | "email" | null
+
+  // 직접 입력(이메일/비밀번호) 관련 상태
+  const [showManualForm, setShowManualForm] = useState(false);
+  const [manualMode, setManualMode] = useState("signup"); // "signup" | "login"
+  const [manualEmail, setManualEmail] = useState("");
+  const [manualPassword, setManualPassword] = useState("");
+  const [manualPasswordConfirm, setManualPasswordConfirm] = useState("");
 
   useEffect(() => {
     window.onNativeAuthState = (payload) => {
@@ -77,8 +146,10 @@ function SignUp() {
 
     window.onNativeSignInError = (payload) => {
       setNativeLoading(null);
-      setError(payload?.message || "오류가 발생했습니다.");
+      setError(convertAuthErrorCode(payload?.code, payload?.message));
     };
+
+    notifyNativeReady();
 
     return () => {
       delete window.onNativeAuthState;
@@ -90,7 +161,6 @@ function SignUp() {
     setError("");
     setNativeLoading("apple");
     requestNativeAppleSignIn();
-    // 결과는 window.onNativeAuthState 콜백으로 옵니다.
   }, []);
 
   const handleGoogleAuth = useCallback(() => {
@@ -104,8 +174,42 @@ function SignUp() {
     setError("");
     setNativeLoading("role");
     requestNativeSaveRole(selected);
-    // 저장 성공 시 window.onNativeAuthState({status:"loggedIn", role}) 콜백이 옵니다.
   }, []);
+
+  const resetManualForm = () => {
+    setManualEmail("");
+    setManualPassword("");
+    setManualPasswordConfirm("");
+    setError("");
+  };
+
+  const switchManualMode = (mode) => {
+    setManualMode(mode);
+    resetManualForm();
+  };
+
+  const handleManualSubmit = (e) => {
+    e.preventDefault();
+    setError("");
+
+    if (manualMode === "signup") {
+      // 가입 시에는 비밀번호를 2번 입력받아 서로 같은지 확인합니다.
+      if (manualPassword.length < 6) {
+        setError("비밀번호는 6자 이상이어야 합니다.");
+        return;
+      }
+      if (manualPassword !== manualPasswordConfirm) {
+        setError("비밀번호가 서로 일치하지 않습니다.");
+        return;
+      }
+      setNativeLoading("email");
+      requestNativeEmailSignUp(manualEmail, manualPassword);
+    } else {
+      // 로그인 시에는 비밀번호를 1번만 입력받습니다.
+      setNativeLoading("email");
+      requestNativeEmailSignIn(manualEmail, manualPassword);
+    }
+  };
 
   // ---- 렌더링: authState 값 하나로만 분기 ----
 
@@ -120,7 +224,6 @@ function SignUp() {
   }
 
   if (authState === "loggedIn") {
-    // 실제 프로젝트에서는 여기서 라우터로 메인 화면으로 이동시키면 됩니다.
     return (
       <div className="signup-page">
         <div className="signup-card">
@@ -134,14 +237,25 @@ function SignUp() {
     <div className="signup-page">
       <div className="signup-card">
         <header className="signup-header">
-          <h1>{authState === "loggedOut" ? "회원가입" : "역할 선택"}</h1>
+          <h1>
+            {(authState === "loggedOut" || authState === "loginCancel")
+              ? manualMode === "signup"
+                ? "회원가입"
+                : "로그인"
+              : "역할 선택"}
+          </h1>
           <p className="signup-subtitle">
-            {authState === "loggedOut" && "로그인 방법을 선택해주세요"}
+            {(authState === "loggedOut" || authState === "loginCancel") && !showManualForm && "로그인 방법을 선택해주세요"}
+            {(authState === "loggedOut" || authState === "loginCancel") &&
+              showManualForm &&
+              (manualMode === "signup"
+                ? "이메일과 비밀번호를 입력해주세요"
+                : "이메일과 비밀번호로 로그인하세요")}
             {authState === "needsRole" && `${name ? `${name}님, ` : ""}어떤 역할이신가요?`}
           </p>
         </header>
 
-        {authState === "loggedOut" && (
+        {(authState === "loggedOut" || authState === "loginCancel") && !showManualForm && (
           <div className="auth-options">
             {platform !== "android" && (
               <button
@@ -165,7 +279,81 @@ function SignUp() {
                 <span>{nativeLoading === "google" ? "처리 중..." : "Google로 계속하기"}</span>
               </button>
             )}
+            <button
+              type="button"
+              className="manual-entry-btn"
+              onClick={() => setShowManualForm(true)}
+              disabled={nativeLoading !== null}
+            >
+              직접 입력하기
+            </button>
           </div>
+        )}
+
+        {(authState === "loggedOut" || authState === "loginCancel") && showManualForm && (
+          <form className="manual-name-form" onSubmit={handleManualSubmit}>
+            <input
+              type="email"
+              className="signup-input"
+              placeholder="이메일"
+              value={manualEmail}
+              onChange={(e) => setManualEmail(e.target.value)}
+              required
+            />
+            <input
+              type="password"
+              className="signup-input"
+              placeholder="비밀번호 (6자 이상)"
+              value={manualPassword}
+              onChange={(e) => setManualPassword(e.target.value)}
+              minLength={6}
+              required
+            />
+            {manualMode === "signup" && (
+              <input
+                type="password"
+                className="signup-input"
+                placeholder="비밀번호 확인"
+                value={manualPasswordConfirm}
+                onChange={(e) => setManualPasswordConfirm(e.target.value)}
+                minLength={6}
+                required
+              />
+            )}
+
+            {error && <p className="signup-error">{error}</p>}
+
+            <button type="submit" className="signup-submit-btn" disabled={nativeLoading !== null}>
+              {nativeLoading === "email"
+                ? "처리 중..."
+                : manualMode === "signup"
+                ? "회원가입"
+                : "로그인"}
+            </button>
+
+            <button
+              type="button"
+              className="manual-entry-btn"
+              onClick={() => switchManualMode(manualMode === "signup" ? "login" : "signup")}
+              disabled={nativeLoading !== null}
+            >
+              {manualMode === "signup"
+                ? "이미 계정이 있으신가요? 로그인"
+                : "계정이 없으신가요? 회원가입"}
+            </button>
+
+            <button
+              type="button"
+              className="manual-entry-btn"
+              onClick={() => {
+                setShowManualForm(false);
+                resetManualForm();
+              }}
+              disabled={nativeLoading !== null}
+            >
+              ← 다른 방법으로 로그인
+            </button>
+          </form>
         )}
 
         {authState === "needsRole" && (
@@ -191,7 +379,7 @@ function SignUp() {
           </div>
         )}
 
-        {error && <p className="signup-error">{error}</p>}
+        {authState === "needsRole" && error && <p className="signup-error">{error}</p>}
       </div>
     </div>
   );
