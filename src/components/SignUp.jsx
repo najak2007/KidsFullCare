@@ -11,7 +11,7 @@
 //   { status: "needsRole", name, email }
 //   { status: "loggedIn", role }
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import "../css/SignUp.css";
 import "../css/SignUp-apple-addon.css";
 
@@ -126,14 +126,22 @@ function SignUp() {
   const [name, setName] = useState("");
   const [role, setRole] = useState(null);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState(""); // 에러가 아닌 안내 메시지 (모드 자동 전환 시)
   const [nativeLoading, setNativeLoading] = useState(null); // "apple" | "google" | "role" | "email" | null
 
   // 직접 입력(이메일/비밀번호) 관련 상태
   const [showManualForm, setShowManualForm] = useState(false);
-  const [manualMode, setManualMode] = useState("signup"); // "signup" | "login"
+  const [manualMode, setManualMode] = useState("login"); // "signup" | "login"
   const [manualEmail, setManualEmail] = useState("");
   const [manualPassword, setManualPassword] = useState("");
   const [manualPasswordConfirm, setManualPasswordConfirm] = useState("");
+  const [hintReturningUser, setHintReturningUser] = useState(false);
+
+  // useEffect(등록은 최초 1회) 안에서도 최신 manualMode 값을 읽기 위한 ref
+  const manualModeRef = useRef(manualMode);
+  useEffect(() => {
+    manualModeRef.current = manualMode;
+  }, [manualMode]);
 
   useEffect(() => {
     window.onNativeAuthState = (payload) => {
@@ -142,10 +150,34 @@ function SignUp() {
       setAuthState(payload.status);
       if (payload.name) setName(payload.name);
       if (payload.role) setRole(payload.role);
+      if (payload.status === "loggedOut") {
+        setHintReturningUser(!!payload.returningUser);
+      }
     };
 
     window.onNativeSignInError = (payload) => {
       setNativeLoading(null);
+      setError("");
+      setNotice("");
+
+      // 이메일/비밀번호 흐름에서, 에러 종류에 따라 로그인 ↔ 회원가입을 자동 전환합니다.
+      if (payload?.provider === "email") {
+        if (payload.code === "auth/user-not-found" && manualModeRef.current === "login") {
+          setManualMode("signup");
+          setManualPassword("");
+          setManualPasswordConfirm("");
+          setNotice("가입된 계정이 없어 회원가입으로 전환했어요. 비밀번호를 새로 설정해주세요.");
+          return;
+        }
+        if (payload.code === "auth/email-already-in-use" && manualModeRef.current === "signup") {
+          setManualMode("login");
+          setManualPassword("");
+          setManualPasswordConfirm("");
+          setNotice("이미 가입된 이메일이에요. 로그인으로 진행할게요.");
+          return;
+        }
+      }
+
       setError(convertAuthErrorCode(payload?.code, payload?.message));
     };
 
@@ -181,6 +213,7 @@ function SignUp() {
     setManualPassword("");
     setManualPasswordConfirm("");
     setError("");
+    setNotice("");
   };
 
   const switchManualMode = (mode) => {
@@ -191,6 +224,7 @@ function SignUp() {
   const handleManualSubmit = (e) => {
     e.preventDefault();
     setError("");
+    setNotice("");
 
     if (manualMode === "signup") {
       // 가입 시에는 비밀번호를 2번 입력받아 서로 같은지 확인합니다.
@@ -231,6 +265,12 @@ function SignUp() {
         </div>
       </div>
     );
+  }
+
+  if (authState === "signUp") {
+    setAuthState("loggedOut");
+    setManualMode("signup");
+    setRole(null);
   }
 
   return (
@@ -282,7 +322,12 @@ function SignUp() {
             <button
               type="button"
               className="manual-entry-btn"
-              onClick={() => setShowManualForm(true)}
+              onClick={() => {
+                // 이 기기가 예전에 가입한 적 있다는 신호(returningUser)가 있으면
+                // 로그인 모드로, 없으면(첫 설치 등) 회원가입 모드로 시작합니다.
+                setManualMode(hintReturningUser ? "login" : "signup");
+                setShowManualForm(true);
+              }}
               disabled={nativeLoading !== null}
             >
               직접 입력하기
@@ -321,6 +366,7 @@ function SignUp() {
               />
             )}
 
+            {notice && <p className="signup-notice">{notice}</p>}
             {error && <p className="signup-error">{error}</p>}
 
             <button type="submit" className="signup-submit-btn" disabled={nativeLoading !== null}>
