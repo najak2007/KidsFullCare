@@ -285,7 +285,7 @@ function SignUp() {
               : "역할 선택"}
           </h1>
           <p className="signup-subtitle">
-            {(authState === "loggedOut" || authState === "loginCancel") && !showManualForm && "로그인 방법을 선택해주세요"}
+            {(authState === "loggedOut" || authState === "loginCancel") && !showManualForm && (manualMode === "signup" ? "회원가입 방법을 선택해주세요." :"로그인 방법을 선택해주세요.")}
             {(authState === "loggedOut" || authState === "loginCancel") &&
               showManualForm &&
               (manualMode === "signup"
@@ -305,7 +305,7 @@ function SignUp() {
                 disabled={nativeLoading !== null}
               >
                 <AppleLogo />
-                <span>{nativeLoading === "apple" ? "처리 중..." : "Apple로 계속하기"}</span>
+                <span>{nativeLoading === "apple" ? "처리 중..." : manualMode === "signup" ? "Apple로 가입하기" : "Apple로 계속하기"}</span>
               </button>
             )}
             {platform !== "ios" && (
@@ -316,7 +316,7 @@ function SignUp() {
                 disabled={nativeLoading !== null}
               >
                 <GoogleLogo />
-                <span>{nativeLoading === "google" ? "처리 중..." : "Google로 계속하기"}</span>
+                <span>{nativeLoading === "google" ? "처리 중..." : manualMode === "signup" ? "Google로 가입하기" : "Google로 계속하기"}</span>
               </button>
             )}
             <button
