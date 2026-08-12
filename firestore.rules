@@ -2,15 +2,31 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // 기본적으로 모든 접근 차단
     match /{document=**} {
       allow read, write: if false;
     }
+
+    // users 컬렉션 규칙
+    match /users/{userId} {
+      // 1. 읽기: 본인 로그인 사용자만 허용
+      allow read: if request.auth != null && request.auth.uid == userId;
+
+      // 2. 생성 (1단계: Sign in with Apple 완료 후 초기 문서 생성)
+      // role 조건 검증을 제거하여 최초 가입 시 문서가 문제없이 생성되도록 합니다.
+      allow create: if request.auth != null && request.auth.uid == userId;
+
+      // 3. 수정 (2단계: role 입력 및 추후 프로필 수정)
+      // 새로 추가/수정되는 role 값이 "parent" 또는 "student"인 경우 허용합니다.
+      allow update: if request.auth != null 
+                  && request.auth.uid == userId
+                  && (
+                    // role을 변경하지 않고 다른 필드만 수정하는 경우
+                    !("role" in request.resource.data) || 
+                    // role을 새로 설정하거나 변경할 때는 지정된 값만 허용
+                    request.resource.data.role in ["parent", "student"]
+                  );
+    }
   }
-  match /users/{userId} {
-  allow create: if request.auth != null && request.auth.uid == userId
-                && request.resource.data.role in ["parent", "student"];
-  allow read: if request.auth != null && request.auth.uid == userId;
-  allow update: if request.auth != null && request.auth.uid == userId
-                && request.resource.data.role == resource.data.role; // role 변경 방지
-	}
 }
