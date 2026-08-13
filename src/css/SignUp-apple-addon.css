@@ -95,6 +95,7 @@
 /* 기본값 = 라이트 모드일 때의 모양 (원래 다크모드 스타일을 그대로 가져옴) */
 .signup-page {
   background-color: #ffffff;
+  touch-action: pan-y; /* 핀치 줌 등 확대/축소 제스처 차단, 세로 스크롤은 허용 */
 }
 
 .signup-card {

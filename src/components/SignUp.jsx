@@ -148,6 +148,33 @@ function SignUp() {
   }, [manualMode]);
 
   useEffect(() => {
+    // 핀치(두 손가락) 줌 제스처 차단.
+    // passive:false로 등록해야 preventDefault가 실제로 동작합니다.
+    const blockPinch = (e) => {
+      if (e.touches && e.touches.length > 1) {
+        e.preventDefault();
+      }
+    };
+
+    document.addEventListener("touchmove", blockPinch, { passive: false });
+
+    // iOS Safari/WKWebView의 제스처 이벤트(핀치 시작/변경/종료)도 함께 막습니다.
+    const blockGesture = (e) => {
+      e.preventDefault();
+    };
+    document.addEventListener("gesturestart", blockGesture, { passive: false });
+    document.addEventListener("gesturechange", blockGesture, { passive: false });
+    document.addEventListener("gestureend", blockGesture, { passive: false });
+
+    return () => {
+      document.removeEventListener("touchmove", blockPinch);
+      document.removeEventListener("gesturestart", blockGesture);
+      document.removeEventListener("gesturechange", blockGesture);
+      document.removeEventListener("gestureend", blockGesture);
+    };
+  }, []);
+
+  useEffect(() => {
     window.onNativeAuthState = (payload) => {
       setNativeLoading(null);
       setError("");
