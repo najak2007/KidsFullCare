@@ -1,27 +1,30 @@
 // src/App.jsx
 import { useAuthUser } from "./hooks/useAuthUser";
 import SignUp from "./components/SignUp"; // 실제 경로에 맞게 조정하세요
+import "./App.css";
 // import MainApp from "./pages/MainApp";
+
 
 function App() {
   const { authUser, profile, loading } = useAuthUser();
 
   // 최초 로그인 상태 확인 중 (거의 즉시 끝나지만, 깜빡임 방지용)
+/*
   if (loading) {
     return (
       <div className="splash-screen">
-        <p>불러오는 중...</p>
+        <p className="splash-progress-text">불러오는 중...</p>
       </div>
     );
   }
 
   // 로그인 + Firestore 프로필(가입)까지 완료된 상태 → 바로 메인 화면으로
+
   if (authUser && profile) {
     // return <MainApp role={profile.role} user={authUser} />;
-    <div>로그아웃 상태인데..... authUser: {authUser.uid}</div>;
-    return <div>메인 화면 (role: {profile.role})</div>;
+    return;
   }
-
+*/
   // 아래 두 가지 케이스는 모두 SignUp으로 보냅니다.
   // 1) authUser가 null → 아예 로그인 안 한 상태 → 기존 Step 0(로그인 방법 선택)부터 시작
   // 2) authUser는 있는데 profile이 null → Apple/Google 로그인은 성공했지만
