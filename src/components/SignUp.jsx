@@ -14,6 +14,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import "../css/SignUp.css";
 import "../css/SignUp-apple-addon.css";
+import StudentLinkScreen from "./StudentLinkScreen"; // 실제 경로에 맞게 조정하세요
 
 /* ------------------------------------------------------------
  * 네이티브 브릿지
@@ -39,11 +40,12 @@ function requestNativeGoogleSignIn() {
   }
 }
 
-function requestNativeSaveRole(role) {
+function requestNativeSaveRole(role, extra = {}) {
+  const payload = { role, ...extra };
   if (window.webkit?.messageHandlers?.roleSelect) {
-    window.webkit.messageHandlers.roleSelect.postMessage(role);
+    window.webkit.messageHandlers.roleSelect.postMessage(payload);
   } else if (window.AndroidBridge?.saveRole) {
-    window.AndroidBridge.saveRole(role);
+    window.AndroidBridge.saveRole(JSON.stringify(payload));
   } else {
     console.warn("Native role 저장 브릿지를 찾을 수 없습니다.");
   }
@@ -125,6 +127,8 @@ function SignUp() {
   const [authState, setAuthState] = useState("checking");
   const [name, setName] = useState("");
   const [role, setRole] = useState(null);
+  // "select": 역할 카드 선택 화면 / "studentLink": 학생 선택 후 추가 정보 입력 화면
+  const [roleSubStep, setRoleSubStep] = useState("select");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState(""); // 에러가 아닌 안내 메시지 (모드 자동 전환 시)
   const [nativeLoading, setNativeLoading] = useState(null); // "apple" | "google" | "role" | "email" | null
@@ -204,8 +208,29 @@ function SignUp() {
   const handleRoleSelect = useCallback((selected) => {
     setRole(selected);
     setError("");
+
+    if (selected === "student") {
+      // 학생은 바로 저장하지 않고, 연결 코드 등 추가 정보를 먼저 입력받습니다.
+      setRoleSubStep("studentLink");
+      return;
+    }
+
+    // 학부모는 추가 정보가 필요 없으므로 바로 저장합니다.
     setNativeLoading("role");
     requestNativeSaveRole(selected);
+  }, []);
+
+  const handleStudentLinkComplete = useCallback((studentInfo) => {
+    // studentInfo 예: { linkCode: "123456", grade: "3학년" } 등
+    // StudentLinkScreen이 실제로 넘겨주는 필드에 맞게 사용하시면 됩니다.
+    setError("");
+    setNativeLoading("role");
+    requestNativeSaveRole("student", studentInfo);
+  }, []);
+
+  const handleStudentLinkBack = useCallback(() => {
+    setRoleSubStep("select");
+    setRole(null);
   }, []);
 
   const resetManualForm = () => {
@@ -273,20 +298,24 @@ function SignUp() {
     setRole(null);
   }
 
+  if (authState === "loginCancel") {
+    setAuthState("loggedOut");
+  }
+
   return (
     <div className="signup-page">
       <div className="signup-card">
         <header className="signup-header">
           <h1>
-            {(authState === "loggedOut" || authState === "loginCancel")
+            {authState === "loggedOut"
               ? manualMode === "signup"
                 ? "회원가입"
                 : "로그인"
               : "역할 선택"}
           </h1>
           <p className="signup-subtitle">
-            {(authState === "loggedOut" || authState === "loginCancel") && !showManualForm && (manualMode === "signup" ? "회원가입 방법을 선택해주세요." :"로그인 방법을 선택해주세요.")}
-            {(authState === "loggedOut" || authState === "loginCancel") &&
+            {authState === "loggedOut" && !showManualForm && (manualMode === "signup" ? "회원가입 방법을 선택해주세요." : "로그인 방법을 선택해주세요.")}
+            {authState === "loggedOut" &&
               showManualForm &&
               (manualMode === "signup"
                 ? "이메일과 비밀번호를 입력해주세요"
@@ -295,7 +324,7 @@ function SignUp() {
           </p>
         </header>
 
-        {(authState === "loggedOut" || authState === "loginCancel") && !showManualForm && (
+        {authState === "loggedOut" && !showManualForm && (
           <div className="auth-options">
             {platform !== "android" && (
               <button
@@ -305,7 +334,7 @@ function SignUp() {
                 disabled={nativeLoading !== null}
               >
                 <AppleLogo />
-                <span>{nativeLoading === "apple" ? "처리 중..." : manualMode === "signup" ? "Apple로 가입하기" : "Apple로 계속하기"}</span>
+                <span>{nativeLoading === "apple" ? "처리 중..." : manualMode === "signup" ? "Apple로 가입하기 " : "Apple로 계속하기"}</span>
               </button>
             )}
             {platform !== "ios" && (
@@ -335,7 +364,7 @@ function SignUp() {
           </div>
         )}
 
-        {(authState === "loggedOut" || authState === "loginCancel") && showManualForm && (
+        {authState === "loggedOut" && showManualForm && (
           <form className="manual-name-form" onSubmit={handleManualSubmit}>
             <input
               type="email"
@@ -402,7 +431,7 @@ function SignUp() {
           </form>
         )}
 
-        {authState === "needsRole" && (
+        {authState === "needsRole" && roleSubStep === "select" && (
           <div className="role-options">
             <button
               type="button"
@@ -423,6 +452,14 @@ function SignUp() {
               <span className="role-label">학생</span>
             </button>
           </div>
+        )}
+
+        {authState === "needsRole" && roleSubStep === "studentLink" && (
+          <StudentLinkScreen
+            onComplete={handleStudentLinkComplete}
+            onBack={handleStudentLinkBack}
+            loading={nativeLoading === "role"}
+          />
         )}
 
         {authState === "needsRole" && error && <p className="signup-error">{error}</p>}

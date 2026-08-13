@@ -1,5 +1,5 @@
 import { doc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore";
-import { db, auth } from "./firebase";
+import { db, auth } from "../firebase";
 
 // 6자리 랜덤 숫자 코드 생성
 function createRandomCode() {

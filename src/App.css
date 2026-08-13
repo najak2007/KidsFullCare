@@ -182,3 +182,29 @@
     border-right-color: var(--border);
   }
 }
+
+.splash-screen {
+  min-height: 100vh;
+  min-height: 100dvh; /* iOS 노치/세이프 영역 대응 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  /* 라이트 모드 기본값 */
+  background-color: #ffffff;
+}
+
+.splash-progress-text {
+  font-size: 14px;
+  /* 라이트 모드 기본값 */
+  color: #6e6e73;
+}
+
+@media (prefers-color-scheme: dark) {
+  .splash-screen {
+    background-color: #000000;
+  }
+  .splash-progress-text {
+    color: #8e8e93;
+  }
+}
