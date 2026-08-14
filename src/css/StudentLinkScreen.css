@@ -1,0 +1,33 @@
+.onetimecode-create-btn,
+.qrcode-create-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    height: 44px;
+    padding: 0 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+}
+
+.onetimecode-create-btn,
+.qrcode-create-btn {
+    background: #000;
+    color: #fff;
+}
+
+.onetimecode-create-btn:disabled,
+.qrcode-create-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.onetimecode-create-btn:hover:not(:disabled),
+.qrcode-create-btn:hover:not(:disabled) {
+    opacity: 0.85;
+}
