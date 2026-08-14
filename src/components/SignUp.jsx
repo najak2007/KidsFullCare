@@ -338,7 +338,7 @@ function SignUp() {
               ? manualMode === "signup"
                 ? "회원가입"
                 : "로그인"
-              : "역할 선택"}
+              : (authState === "needsRole" && roleSubStep === "studentLink") ? "인증 코드" : "역할 선택"}
           </h1>
           <p className="signup-subtitle">
             {authState === "loggedOut" && !showManualForm && (manualMode === "signup" ? "회원가입 방법을 선택해주세요." : "로그인 방법을 선택해주세요.")}
