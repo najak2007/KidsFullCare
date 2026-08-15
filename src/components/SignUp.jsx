@@ -338,7 +338,7 @@ function SignUp() {
               ? manualMode === "signup"
                 ? "회원가입"
                 : "로그인"
-              : (authState === "needsRole" && roleSubStep === "studentLink") ? "인증 코드" : "역할 선택"}
+              : (authState === "needsRole" && roleSubStep === "studentLink") ? "인증방법 선택" : "역할 선택"}
           </h1>
           <p className="signup-subtitle">
             {authState === "loggedOut" && !showManualForm && (manualMode === "signup" ? "회원가입 방법을 선택해주세요." : "로그인 방법을 선택해주세요.")}
@@ -347,7 +347,7 @@ function SignUp() {
               (manualMode === "signup"
                 ? "이메일과 비밀번호를 입력해주세요"
                 : "이메일과 비밀번호로 로그인하세요")}
-            {authState === "needsRole" && `${name ? `${name}님, ` : ""}어떤 역할이신가요?`}
+            {authState === "needsRole" &&  ((roleSubStep === "studentLink") ? `${name ? `${name}님, ` : ""} 엄마/아빠에게 보여줄 Code를 만들어 주세요` : `${name ? `${name}님, ` : ""}어떤 역할이신가요?`)}
           </p>
         </header>
 

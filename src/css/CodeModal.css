@@ -1,0 +1,99 @@
+/* CodeModal.css */
+
+.code-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: code-modal-fade-in 0.2s ease-out;
+}
+
+.code-modal {
+  background-color: var(--card-bg, #ffffff);
+  color: inherit;
+  border-radius: 20px;
+  padding: 32px 28px;
+  max-width: 320px;
+  width: 85%;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  animation: code-modal-pop-in 0.2s ease-out;
+}
+
+.code-modal-label {
+  font-size: 14px;
+  color: #6e6e73;
+  margin: 0 0 16px;
+}
+
+.code-modal-value {
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  margin: 0 0 16px;
+}
+
+.code-modal-timer {
+  font-size: 12px;
+  color: #8e8e93;
+  margin: 0 0 24px;
+}
+
+.code-modal-dismiss-btn {
+  width: 100%;
+  height: 44px;
+  border: none;
+  border-radius: 10px;
+  background-color: #f2f2f7;
+  color: #1c1c1e;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.code-modal-dismiss-btn:active {
+  opacity: 0.8;
+}
+
+@keyframes code-modal-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes code-modal-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .code-modal {
+    background-color: #1c1c1e;
+    color: #f5f5f7;
+  }
+
+  .code-modal-label {
+    color: #a1a1a6;
+  }
+
+  .code-modal-timer {
+    color: #8e8e93;
+  }
+
+  .code-modal-dismiss-btn {
+    background-color: #2c2c2e;
+    color: #f5f5f7;
+  }
+}

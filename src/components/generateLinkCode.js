@@ -1,28 +1,38 @@
-import { doc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore";
-import { db, auth } from "../firebase";
-
-// 6자리 랜덤 숫자 코드 생성
-function createRandomCode() {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+function requestNativeGenerateLinkCode() {
+  if (window.webkit?.messageHandlers?.generateLinkCode) {
+    window.webkit.messageHandlers.generateLinkCode.postMessage(null);
+    return true;
+  }
+  if (window.AndroidBridge?.generateLinkCode) {
+    window.AndroidBridge.generateLinkCode();
+    return true;
+  }
+  return false;
 }
-
-export async function generateLinkCode() {
-  const user = auth.currentUser;
-  if (!user) throw new Error("로그인이 필요합니다.");
-
-  const code = createRandomCode();
-
-  // linkCodes/{code} 문서 생성
-  await setDoc(doc(db, "linkCodes", code), {
-    studentUid: user.uid,
-    createdAt: serverTimestamp(),
-    used: false,
+ 
+export function generateLinkCode() {
+  return new Promise((resolve, reject) => {
+    const sent = requestNativeGenerateLinkCode();
+    if (!sent) {
+      reject(new Error("Native 코드 생성 브릿지를 찾을 수 없습니다."));
+      return;
+    }
+ 
+    // 이전에 등록된 핸들러가 있다면 보존해뒀다가, 처리 후 복원합니다.
+    // (다른 화면에서 동시에 이 콜백을 쓰고 있을 가능성을 대비)
+    const previousHandler = window.onNativeLinkCodeResult;
+ 
+    const cleanup = () => {
+      window.onNativeLinkCodeResult = previousHandler;
+    };
+ 
+    window.onNativeLinkCodeResult = (payload) => {
+      cleanup();
+      if (payload?.code) {
+        resolve(payload.code);
+      } else {
+        reject(new Error(payload?.message || "코드 생성에 실패했습니다."));
+      }
+    };
   });
-
-  // 학생 본인 users 문서에도 현재 코드 표시용으로 저장 (선택사항)
-  await updateDoc(doc(db, "users", user.uid), {
-    currentLinkCode: code,
-  });
-
-  return code; // 화면에 표시해서 학부모에게 공유
 }

@@ -28,5 +28,20 @@ service cloud.firestore {
                     request.resource.data.role in ["parent", "student"]
                   );
     }
+
+    match /linkCodes/{code} {
+      // 코드는 로그인한 학생 본인만 생성 가능, 문서의 studentUid가 자기 uid와 일치해야 함
+      allow create: if request.auth != null
+                    && request.resource.data.studentUid == request.auth.uid;
+
+      // 코드 조회는 로그인한 사용자면 누구나 가능 (학부모가 코드로 찾아야 하니까)
+      allow read: if request.auth != null;
+
+      // 사용 처리(used: true, parentUid 등 추가)는 로그인한 사용자면 가능하되
+      // studentUid/createdAt은 못 바꾸게 제한
+      allow update: if request.auth != null
+                    && request.resource.data.studentUid == resource.data.studentUid
+                    && request.resource.data.createdAt == resource.data.createdAt;
+    }
   }
 }
