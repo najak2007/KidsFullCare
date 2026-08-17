@@ -28,8 +28,8 @@ export function generateLinkCode() {
  
     window.onNativeLinkCodeResult = (payload) => {
       cleanup();
-      if (payload?.code) {
-        resolve(payload.code);
+      if (payload?.code && payload?.uid) {
+        resolve({ code: payload.code, uid: payload.uid || "" });
       } else {
         reject(new Error(payload?.message || "코드 생성에 실패했습니다."));
       }

@@ -51,11 +51,11 @@ function requestNativeSaveRole(role, extra = {}) {
   }
 }
 
-function requestNativeEmailSignUp(email, password) {
+function requestNativeEmailSignUp(name, email, password) {
   if (window.webkit?.messageHandlers?.emailSignUp) {
-    window.webkit.messageHandlers.emailSignUp.postMessage({ email, password });
+    window.webkit.messageHandlers.emailSignUp.postMessage({ name, email, password });
   } else if (window.AndroidBridge?.emailSignUp) {
-    window.AndroidBridge.emailSignUp(email, password);
+    window.AndroidBridge.emailSignUp(name, email, password);
   } else {
     console.warn("Native 이메일 가입 브릿지를 찾을 수 없습니다.");
   }
@@ -79,6 +79,17 @@ function notifyNativeReady() {
     window.webkit.messageHandlers.jsReady.postMessage(null);
   } else if (window.AndroidBridge?.notifyReady) {
     window.AndroidBridge.notifyReady();
+  }
+}
+
+function requestNativeReset() {
+  // 로그아웃 + 이 기기에 저장된 로그인 흔적(Keychain)까지 전부 삭제합니다.
+  if (window.webkit?.messageHandlers?.resetDevice) {
+    window.webkit.messageHandlers.resetDevice.postMessage(null);
+  } else if (window.AndroidBridge?.resetDevice) {
+    window.AndroidBridge.resetDevice();
+  } else {
+    console.warn("Native 초기화 브릿지를 찾을 수 없습니다.");
   }
 }
 
@@ -136,10 +147,12 @@ function SignUp() {
   // 직접 입력(이메일/비밀번호) 관련 상태
   const [showManualForm, setShowManualForm] = useState(false);
   const [manualMode, setManualMode] = useState("login"); // "signup" | "login"
+  const [manualName, setManualName] = useState("");
   const [manualEmail, setManualEmail] = useState("");
   const [manualPassword, setManualPassword] = useState("");
   const [manualPasswordConfirm, setManualPasswordConfirm] = useState("");
   const [hintReturningUser, setHintReturningUser] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   // useEffect(등록은 최초 1회) 안에서도 최신 manualMode 값을 읽기 위한 ref
   const manualModeRef = useRef(manualMode);
@@ -183,6 +196,14 @@ function SignUp() {
       if (payload.role) setRole(payload.role);
       if (payload.status === "loggedOut") {
         setHintReturningUser(!!payload.returningUser);
+        /// 로그아웃/재설정 시 이전 화면 흔적을 깨끗이 지웁니다.
+        setRoleSubStep("select");
+        setShowManualForm(false);
+        setManualEmail(""); 
+        setManualPassword("");
+        setManualPasswordConfirm("");
+        setNotice("");
+        setRole(null);
       }
     };
 
@@ -260,6 +281,28 @@ function SignUp() {
     setRole(null);
   }, []);
 
+  const getBackAction = () => {
+    if (authState === "loggedOut" && showManualForm) {
+      return () => {
+        setShowManualForm(false);
+        resetManualForm();
+      }
+    }
+    if (authState === "needsRole" && roleSubStep === "studentLink") {
+      return handleStudentLinkBack;
+    }
+    return null;
+  }
+
+  const backAction = getBackAction();
+
+  const handleResetConfirm = () => {
+    setShowResetConfirm(false);
+    setNativeLoading("reset");
+    requestNativeReset();
+    // 결과는 window.onNativeAuthState({ status: "loggedOut", returningUser: false })로 옵니다.
+  }
+
   const resetManualForm = () => {
     setManualEmail("");
     setManualPassword("");
@@ -289,7 +332,7 @@ function SignUp() {
         return;
       }
       setNativeLoading("email");
-      requestNativeEmailSignUp(manualEmail, manualPassword);
+      requestNativeEmailSignUp(manualName, manualEmail, manualPassword);
     } else {
       // 로그인 시에는 비밀번호를 1번만 입력받습니다.
       setNativeLoading("email");
@@ -298,6 +341,49 @@ function SignUp() {
   };
 
   // ---- 렌더링: authState 값 하나로만 분기 ----
+
+  const topbar = (
+    <div className="signup-topbar">
+      <button 
+        type="button" 
+        className="signup-back-btn"
+        onClick={backAction || undefined}
+        disabled={!backAction}
+        style={{ visibility: backAction ? "visible" : "hidden"}}
+        >
+          뒤로
+      </button>
+      <button
+        type="button"
+        className="signup-reset-btn"
+        onClick={() => setShowResetConfirm(true)}
+        disabled={nativeLoading !== null}
+      >
+        재설정
+      </button>
+    </div>
+  );
+
+  const resetConfirmModal = showResetConfirm && (
+    <div className="confirm-overlay" onClick={() => setShowResetConfirm(false)}>
+      <div className="confirm-modal" onClick={(e) => e.stopPropagation()}>
+        <p className="confirm-title">정말 초기화하시겠어요?</p>
+        <p className="confirm-body">
+          로그아웃되고, 이 기기에 저장된 로그인 정보가 모두 삭제됩니다.
+        </p>
+        <button type="button" className="confirm-danger-btn" onClick={handleResetConfirm}>
+          초기화
+        </button>
+        <button
+          type="button"
+          className="confirm-cancel-btn"
+          onClick={() => setShowResetConfirm(false)}
+        >
+          취소
+        </button>
+      </div>
+    </div>
+  );
 
   if (authState === "checking") {
     return (
@@ -330,6 +416,8 @@ function SignUp() {
   }
 
   return (
+    <> 
+    {topbar}
     <div className="signup-page">
       <div className="signup-card">
         <header className="signup-header">
@@ -338,14 +426,14 @@ function SignUp() {
               ? manualMode === "signup"
                 ? "회원가입"
                 : "로그인"
-              : (authState === "needsRole" && roleSubStep === "studentLink") ? "인증방법 선택" : "역할 선택"}
+              : (authState === "needsRole" && roleSubStep === "studentLink") ? "인증 Code 생성" : "역할 선택"}
           </h1>
           <p className="signup-subtitle">
             {authState === "loggedOut" && !showManualForm && (manualMode === "signup" ? "회원가입 방법을 선택해주세요." : "로그인 방법을 선택해주세요.")}
             {authState === "loggedOut" &&
               showManualForm &&
               (manualMode === "signup"
-                ? "이메일과 비밀번호를 입력해주세요"
+                ? "이름/이메일과 비밀번호를 입력해주세요"
                 : "이메일과 비밀번호로 로그인하세요")}
             {authState === "needsRole" &&  ((roleSubStep === "studentLink") ? `${name ? `${name}님, ` : ""} 엄마/아빠에게 보여줄 Code를 만들어 주세요` : `${name ? `${name}님, ` : ""}어떤 역할이신가요?`)}
           </p>
@@ -393,6 +481,16 @@ function SignUp() {
 
         {authState === "loggedOut" && showManualForm && (
           <form className="manual-name-form" onSubmit={handleManualSubmit}>
+            {manualMode === "signup" && (
+              <input
+                type="text"
+                className="signup-input"
+                placeholder="이름"
+                value={manualName}
+                onChange={(e) => setManualName(e.target.value)}
+                required 
+              />
+            )}
             <input
               type="email"
               className="signup-input"
@@ -492,6 +590,8 @@ function SignUp() {
         {authState === "needsRole" && error && <p className="signup-error">{error}</p>}
       </div>
     </div>
+    {resetConfirmModal}
+    </>
   );
 }
 

@@ -84,6 +84,110 @@
 }
 
 /* ------------------------------------------------------------
+ * 상단 바 (뒤로가기 / 재설정)
+ * signup-page/카드 내부가 아니라, 화면 전체 최상단에 고정되는
+ * 네비게이션 바처럼 동작합니다.
+ * ------------------------------------------------------------ */
+.signup-topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(env(safe-area-inset-top, 0px) + 10px) 16px 10px;
+  background-color: #f2f2f7; /* 라이트 모드 기본값, signup-page와 동일 */
+}
+
+.signup-back-btn {
+  background: transparent;
+  border: none;
+  padding: 6px 4px;
+  font-size: 16px;
+  color: #1c1c1e;
+  cursor: pointer;
+}
+
+.signup-reset-btn {
+  background: transparent;
+  border: none;
+  padding: 6px 4px;
+  font-size: 16px;
+  color: #1c1c1e;
+  cursor: pointer;
+}
+
+.signup-reset-btn:disabled,
+.signup-back-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ------------------------------------------------------------
+ * 재설정 확인 팝업
+ * ------------------------------------------------------------ */
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.confirm-modal {
+  background: var(--card-bg, #ffffff);
+  color: inherit;
+  border-radius: 20px;
+  padding: 28px 24px;
+  max-width: 300px;
+  width: 85%;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+
+.confirm-title {
+  font-size: 17px;
+  font-weight: 600;
+  margin: 0 0 8px;
+}
+
+.confirm-body {
+  font-size: 13px;
+  color: #6e6e73;
+  margin: 0 0 20px;
+  line-height: 1.5;
+}
+
+.confirm-danger-btn {
+  width: 100%;
+  height: 44px;
+  border: none;
+  border-radius: 10px;
+  background-color: #ff3b30;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+
+.confirm-cancel-btn {
+  width: 100%;
+  height: 44px;
+  border: none;
+  border-radius: 10px;
+  background-color: #f2f2f7;
+  color: #1c1c1e;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* ------------------------------------------------------------
  * 라이트/다크 모드 색상 (요청에 따라 서로 반대로 뒤집음)
  * - 라이트 모드: 카드는 어두운 배경 + 밝은 글자
  * - 다크 모드: 카드는 밝은 배경 + 어두운 글자
@@ -94,8 +198,11 @@
 
 /* 기본값 = 라이트 모드일 때의 모양 (원래 다크모드 스타일을 그대로 가져옴) */
 .signup-page {
-  background-color: #ffffff;
+  background-color: #f2f2f7;
   touch-action: pan-y; /* 핀치 줌 등 확대/축소 제스처 차단, 세로 스크롤은 허용 */
+  /* 고정된 .signup-topbar와 카드 내용이 겹치지 않도록 여백 확보 */
+  padding-top: calc(52px + env(safe-area-inset-top, 0px));
+  box-sizing: border-box;
 }
 
 .signup-card {
@@ -211,5 +318,25 @@
   .signup-error {
     color: #dc2626;
   }
-}
 
+  .confirm-modal {
+    background-color: #ffffff;
+    color: #1c1c1e;
+  }
+
+  .confirm-body {
+    color: #6e6e73;
+  }
+
+  .signup-topbar {
+    background-color: #000000;
+  }
+
+  .signup-back-btn {
+    color: #f5f5f7;
+  }
+
+  .signup-reset-btn {
+  color: #f5f5f7;
+  }
+}
