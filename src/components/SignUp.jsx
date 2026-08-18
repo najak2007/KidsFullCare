@@ -288,7 +288,8 @@ function SignUp() {
         resetManualForm();
       }
     }
-    if (authState === "needsRole" && roleSubStep === "studentLink") {
+ //   if (authState === "needsRole" && roleSubStep === "studentLink") {
+    if( authState === "needsRole") {
       return handleStudentLinkBack;
     }
     return null;
@@ -358,6 +359,7 @@ function SignUp() {
         className="signup-reset-btn"
         onClick={() => setShowResetConfirm(true)}
         disabled={nativeLoading !== null}
+        style={{ visibility: ( authState === "loggedOut" && manualMode === "signup") ? "hidden" : "visible" }}
       >
         재설정
       </button>
