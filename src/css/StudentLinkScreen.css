@@ -4,7 +4,7 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    width: 100%;
+    width: 130px;
     height: 44px;
     padding: 0 16px;
     border: none;
@@ -30,4 +30,18 @@
 .onetimecode-create-btn:hover:not(:disabled),
 .qrcode-create-btn:hover:not(:disabled) {
     opacity: 0.85;
+}
+
+.create-btn-layout {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.codeview-layout {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
 }
