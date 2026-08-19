@@ -153,6 +153,7 @@ function SignUp() {
   const [manualPasswordConfirm, setManualPasswordConfirm] = useState("");
   const [hintReturningUser, setHintReturningUser] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [provider, setProvider] = useState(null); // "apple" | "google" | "email" | null
 
   // useEffect(등록은 최초 1회) 안에서도 최신 manualMode 값을 읽기 위한 ref
   const manualModeRef = useRef(manualMode);
@@ -196,9 +197,10 @@ function SignUp() {
       if (payload.role) setRole(payload.role);
       if (payload.status === "loggedOut") {
         setHintReturningUser(!!payload.returningUser);
+        setProvider(payload.provider || null);
         /// 로그아웃/재설정 시 이전 화면 흔적을 깨끗이 지웁니다.
         setRoleSubStep("select");
-        setShowManualForm(false);
+        setShowManualForm(payload.provider === "email"); // 이메일/비밀번호 흐름이면 바로 폼 보여주기
         setManualEmail(""); 
         setManualPassword("");
         setManualPasswordConfirm("");
