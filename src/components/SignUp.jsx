@@ -93,6 +93,16 @@ function requestNativeReset() {
   }
 }
 
+function notifyNativeInputFocus(fieldName) {
+  // input에 포커스가 갈 때 네이티브에 알려줍니다.
+  // (키보드 대응 스크롤 조정, 로깅 등 필요에 따라 네이티브에서 활용)
+  if (window.webkit?.messageHandlers?.inputFocus) {
+    window.webkit.messageHandlers.inputFocus.postMessage(fieldName);
+  } else if (window.AndroidBridge?.onInputFocus) {
+    window.AndroidBridge.onInputFocus(fieldName);
+  }
+}
+
 function usePlatform() {
   const [platform] = useState(() => {
     if (typeof navigator === "undefined") return "web";
@@ -235,11 +245,24 @@ function SignUp() {
       setError(convertAuthErrorCode(payload?.code, payload?.message));
     };
 
+    window.onNativeBiometricLogin = (payload) => {
+      if (!payload?.email || !payload?.password) return;
+      setManualMode("login");
+      setShowManualForm(true);
+      setManualEmail(payload.email);
+      setManualPassword(payload.password);
+      setError("");
+      setNotice("");
+      setNativeLoading("email");
+      requestNativeEmailSignIn(payload.email, payload.password);
+    };
+
     notifyNativeReady();
 
     return () => {
       delete window.onNativeAuthState;
       delete window.onNativeSignInError;
+      delete window.onNativeBiometricLogin;
     };
   }, []);
 
@@ -501,6 +524,7 @@ function SignUp() {
               placeholder="이메일"
               value={manualEmail}
               onChange={(e) => setManualEmail(e.target.value)}
+              onFocus={() => notifyNativeInputFocus("email")}
               required
             />
             <input
@@ -509,6 +533,7 @@ function SignUp() {
               placeholder="비밀번호 (6자 이상)"
               value={manualPassword}
               onChange={(e) => setManualPassword(e.target.value)}
+              onFocus={() => notifyNativeInputFocus("password")}
               minLength={6}
               required
             />
