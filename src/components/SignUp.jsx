@@ -15,6 +15,9 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import "../css/SignUp.css";
 import "../css/SignUp-apple-addon.css";
 import StudentLinkScreen from "./StudentLinkScreen"; // 실제 경로에 맞게 조정하세요
+import ProfileImageButton from "./ProfileImageButton";
+import AddLinkButton from "./AddLinkButton";
+
 
 /* ------------------------------------------------------------
  * 네이티브 브릿지
@@ -114,6 +117,7 @@ function usePlatform() {
   return platform;
 }
 
+
 /* ------------------------------------------------------------
  * 네이티브 에러 코드 → 사용자 메시지
  * (Swift 쪽에서 auth/xxx 형태의 code를 함께 보내줍니다)
@@ -164,6 +168,8 @@ function SignUp() {
   const [hintReturningUser, setHintReturningUser] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [provider, setProvider] = useState(null); // "apple" | "google" | "email" | null
+  const [profileImage, setProfileImage] = useState(null);   // profile image에 대한 base64
+ 
 
   // useEffect(등록은 최초 1회) 안에서도 최신 manualMode 값을 읽기 위한 ref
   const manualModeRef = useRef(manualMode);
@@ -205,6 +211,10 @@ function SignUp() {
       setAuthState(payload.status);
       if (payload.name) setName(payload.name);
       if (payload.role) setRole(payload.role);
+      if (payload.imageBase64) {
+        const dataUrl = `data:image/jpeg;base64,${payload.imageBase64}`;
+        setProfileImage(dataUrl);
+      }
       if (payload.status === "loggedOut") {
         setHintReturningUser(!!payload.returningUser);
         setProvider(payload.provider || null);
@@ -368,7 +378,7 @@ function SignUp() {
 
   // ---- 렌더링: authState 값 하나로만 분기 ----
 
-  const topbar = (
+  const signUpTopbar = (
     <div className="signup-topbar">
       <button 
         type="button" 
@@ -388,6 +398,14 @@ function SignUp() {
       >
         재설정
       </button>
+    </div>
+  );
+
+  const loginTopbar = (
+    <div className="login-topbar">
+      <ProfileImageButton value={profileImage} onChange={setProfileImage} />
+
+      <AddLinkButton />
     </div>
   );
 
@@ -424,11 +442,14 @@ function SignUp() {
 
   if (authState === "loggedIn") {
     return (
+      <>
+      {loginTopbar}
       <div className="signup-page">
         <div className="signup-card">
           <p>메인 화면 (role: {role})</p>
         </div>
       </div>
+      </>
     );
   }
 
@@ -444,7 +465,7 @@ function SignUp() {
 
   return (
     <> 
-    {topbar}
+    {signUpTopbar}
     <div className="signup-page">
       <div className="signup-card">
         <header className="signup-header">
