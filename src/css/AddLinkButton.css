@@ -1,0 +1,23 @@
+.link-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  overflow: hidden;
+  cursor: pointer;
+ 
+  background-color: #e5e5ea;
+  background-size: cover;
+  background-position: center;
+ 
+  display: flex;
+  align-items: center;
+  justify-content: center;    
+}
+
+@media (prefers-color-scheme: dark) {
+    .link-btn {
+        background-color: #2c2c2e;
+    }
+}

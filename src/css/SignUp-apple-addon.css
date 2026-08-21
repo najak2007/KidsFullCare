@@ -88,6 +88,7 @@
  * signup-page/카드 내부가 아니라, 화면 전체 최상단에 고정되는
  * 네비게이션 바처럼 동작합니다.
  * ------------------------------------------------------------ */
+ .login-topbar,
 .signup-topbar {
   position: fixed;
   top: 0;
@@ -328,6 +329,7 @@
     color: #6e6e73;
   }
 
+  .login-topbar,
   .signup-topbar {
     background-color: #000000;
   }
