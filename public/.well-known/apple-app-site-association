@@ -4,7 +4,7 @@
 		"details": [
 			{
 				"appID": "9KH64W7EHZ.com.najak.KidsFullCare",
-				"paths": ["NOT /_/*", "/*"]
+				"paths": [ "*" ]
 			}
 		]
 	}
