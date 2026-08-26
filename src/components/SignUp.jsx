@@ -226,6 +226,14 @@ function SignUp() {
         setManualPasswordConfirm("");
         setNotice("");
         setRole(null);
+      } else if (payload.status === "signUp") {
+        setRoleSubStep("select");
+        setShowManualForm(false);
+        setProvider(null);
+        setManualEmail("");
+        setManualPassword("");
+        setManualPasswordConfirm("");
+        setNotice("");
       }
     };
 
@@ -385,7 +393,7 @@ function SignUp() {
         className="signup-back-btn"
         onClick={backAction || undefined}
         disabled={!backAction}
-        style={{ visibility: backAction ? "visible" : "hidden"}}
+        style={{ visibility: backAction ? authState === "loggedOut" ? "hidden" : "visible" : "hidden"}}
         >
           뒤로
       </button>

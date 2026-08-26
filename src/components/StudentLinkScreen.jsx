@@ -62,26 +62,12 @@ function StudentLinkScreen() {
     }
   };
 
-  const handleOneTimeCodeGenerate = async () => {
-    setOtploading(true);
-    try {
-      const info = await generateLinkCode(); // { code, uid }
-      setModalMode("numeric");
-      setLinkInfo(info);
-    } catch (e) {
-      console.error(e);
-      alert("코드 생성에 실패했습니다.");
-    } finally {
-      setOtploading(false);
-    }
-  };
-
   // QR에 넣을 값: 유니버설 링크 URL 형태로 인코딩합니다.
   // 카메라 앱으로 스캔하면 iOS/Android 둘 다 이 URL을 인식해서
   // (Associated Domains / App Links 설정이 되어 있다면) 앱을 직접 엽니다.
   // JSON 문자열로 인코딩하면 카메라 앱이 그냥 텍스트로만 보여주고 앱을 못 엽니다.
   const qrValue = linkInfo
-    ? `https://kidsfullcare.app/link?code=${encodeURIComponent(linkInfo.code)}&uid=${encodeURIComponent(linkInfo.uid)}`
+    ? `https://kidsfullcare.web.app/share?code=${encodeURIComponent(linkInfo.code)}&uid=${encodeURIComponent(linkInfo.uid)}`
     : "";
 
   return (
@@ -100,7 +86,7 @@ function StudentLinkScreen() {
             onClick={() => setShowCodeModal(false)}
           >
             <div className="code-modal" onClick={(e) => e.stopPropagation()}>
-              <p className="code-modal-label">이 코드를 학부모님께 보여주세요</p>
+              <p className="code-modal-label">이 코드를 부모님께 보여주세요</p>
  
               {modalMode === "qr" ? (
                 <div className="code-modal-qr">
@@ -116,7 +102,6 @@ function StudentLinkScreen() {
               <p className="code-modal-timer">
                 {formatTime(remainingSeconds)} 후 자동으로 닫힙니다
               </p>
-
               <button
                 type="button"
                 className="code-modal-dismiss-btn"

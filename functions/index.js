@@ -8,6 +8,9 @@
  */
 
 const {setGlobalOptions} = require("firebase-functions");
+const { onSchedule } = require("firebase-functions/v2/scheduler");
+const { initializeApp } = require("firebase-admin/app");
+const { getFirestore, Timestamp } = require("firebase-admin/firestore");
 
 // For cost control, you can set the maximum number of containers that can be
 // running at the same time. This helps mitigate the impact of unexpected
@@ -28,3 +31,35 @@ setGlobalOptions({ maxInstances: 10 });
 //   logger.info("Hello logs!", {structuredData: true});
 //   response.send("Hello from Firebase!");
 // });
+
+initializeApp();
+ 
+exports.cleanupExpiredLinkCodes = onSchedule(
+  {
+    schedule: "every 1 minutes",
+    timeZone: "Asia/Seoul",
+  },
+  async () => {
+    const db = getFirestore();
+    const now = Timestamp.now();
+ 
+    const expiredSnapshot = await db
+      .collection("linkCodes")
+      .where("expiresAt", "<=", now)
+      .get();
+ 
+    if (expiredSnapshot.empty) {
+      return;
+    }
+ 
+    // 한 번에 지울 문서가 많을 수 있으니 배치로 처리합니다 (최대 500개/배치).
+    const batch = db.batch();
+    expiredSnapshot.docs.forEach((doc) => {
+      batch.delete(doc.ref);
+    });
+    await batch.commit();
+ 
+    console.log(`만료된 linkCodes ${expiredSnapshot.size}개 삭제 완료`);
+  }
+);
+ 
