@@ -96,6 +96,14 @@ function requestNativeReset() {
   }
 }
 
+function requestNativeAddFamilyForUID(uid) {
+  if (window.webkit?.messageHandlers?.addFamilyForUID) {
+    window.webkit.messageHandlers.addFamilyForUID.postMessage(uid)
+  } else if (window.AndroidBridge?.addFamilyForUID) {
+    window.AndroidBridge.addFamilyForUID(uid);
+  }
+}
+
 function notifyNativeInputFocus(fieldName) {
   // input에 포커스가 갈 때 네이티브에 알려줍니다.
   // (키보드 대응 스크롤 조정, 로깅 등 필요에 따라 네이티브에서 활용)
@@ -169,6 +177,8 @@ function SignUp() {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [provider, setProvider] = useState(null); // "apple" | "google" | "email" | null
   const [profileImage, setProfileImage] = useState(null);   // profile image에 대한 base64
+  const [addUserUid, setAddUserUid] = useState(null);
+  const [addUserName, setAddUserName] = useState(null);
  
 
   // useEffect(등록은 최초 1회) 안에서도 최신 manualMode 값을 읽기 위한 ref
@@ -275,12 +285,26 @@ function SignUp() {
       requestNativeEmailSignIn(payload.email, payload.password);
     };
 
+    window.onNativeIncomingLinkCode = (payload) => {
+      if (!payload?.uid) return;
+      requestNativeAddFamilyForUID(payload.uid);
+    };
+
+    window.onNativeAddFamilyForName = (payload) => {
+      if (!payload?.addUserName || !payload?.addUserUid) return;
+      setAddUserUid(payload.addUserUid)
+      setAddUserName(payload.addUserName);
+
+    };
+
     notifyNativeReady();
 
     return () => {
       delete window.onNativeAuthState;
       delete window.onNativeSignInError;
       delete window.onNativeBiometricLogin;
+      delete window.onNativeIncomingLinkCode;
+      delete window.onNativeAddFamilyForName;
     };
   }, []);
 
