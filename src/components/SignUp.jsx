@@ -96,11 +96,11 @@ function requestNativeReset() {
   }
 }
 
-function requestNativeAddFamilyForUID(uid) {
+function requestNativeAddFamilyForUID(uid, name) {
   if (window.webkit?.messageHandlers?.addFamilyForUID) {
-    window.webkit.messageHandlers.addFamilyForUID.postMessage(uid)
+    window.webkit.messageHandlers.addFamilyForUID.postMessage({ uid, name });
   } else if (window.AndroidBridge?.addFamilyForUID) {
-    window.AndroidBridge.addFamilyForUID(uid);
+    window.AndroidBridge.addFamilyForUID(uid, name);
   }
 }
 
@@ -286,8 +286,8 @@ function SignUp() {
     };
 
     window.onNativeIncomingLinkCode = (payload) => {
-      if (!payload?.uid) return;
-      requestNativeAddFamilyForUID(payload.uid);
+      if (!payload?.uid || !payload?.name) return;
+      requestNativeAddFamilyForUID(payload.uid, payload.name);
     };
 
     window.onNativeAddFamilyForName = (payload) => {

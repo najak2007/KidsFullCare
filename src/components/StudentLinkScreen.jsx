@@ -6,6 +6,16 @@ import "../css/StudentLinkScreen.css";
 import "../css/CodeModal.css";
 
 
+function requestNativeQRCodeAuthTimeLimit(code) {
+  if (window.webkit?.messageHandlers?.qrCodeAuthTimeLimit) {
+    window.webkit.messageHandlers.qrCodeAuthTimeLimit.postMessage(code);
+  } else if (window.AndroidBridge?.qrCodeAuthTimeLimit) {
+    window.AndroidBridge.qrCodeAuthTimeLimit(code);
+  } else {
+    console.warn("Native QR 코드 인증 시간 제한 브릿지를 찾을 수 없습니다.");
+  }
+}
+  
 function StudentLinkScreen() {
   const [linkInfo, setLinkInfo] = useState(null);
   const [modalMode, setModalMode] = useState("numeric"); // "qr" | "numeric"
@@ -15,6 +25,7 @@ function StudentLinkScreen() {
 
   const [showCodeModal, setShowCodeModal] = useState(false);
   const [remainingSeconds, setRemainingSeconds] = useState(120); // 2분
+  const [authCompleteName, setAuthCompleteName] = useState(null); // 연결된 학부모 이름
 
   // code가 새로 생기면 모달을 열고 타이머를 리셋합니다.
   useEffect(() => {
@@ -42,6 +53,19 @@ function StudentLinkScreen() {
     return () => clearInterval(timer);
   }, [showCodeModal]);
 
+  useEffect(() => {
+    window.onNativeQRCodeAuthComplete = (payload) => {
+      setShowCodeModal(false);
+      setAuthCompleteName(payload?.name || "");
+    };
+
+    return () => {
+      delete window.onNativeQRCodeAuthComplete;
+    }
+  }, []);
+
+
+
   const formatTime = (totalSeconds) => {
     const m = Math.floor(totalSeconds / 60);
     const s = totalSeconds % 60;
@@ -54,6 +78,7 @@ function StudentLinkScreen() {
       const info = await generateLinkCode();
       setModalMode("qr")
       setLinkInfo(info);
+      requestNativeQRCodeAuthTimeLimit(info.code);
     } catch (err) {
       console.error(err);
       alert("코드 생성에 실패했습니다.");
@@ -67,7 +92,7 @@ function StudentLinkScreen() {
   // (Associated Domains / App Links 설정이 되어 있다면) 앱을 직접 엽니다.
   // JSON 문자열로 인코딩하면 카메라 앱이 그냥 텍스트로만 보여주고 앱을 못 엽니다.
   const qrValue = linkInfo
-    ? `https://kidsfullcare.web.app/share?code=${encodeURIComponent(linkInfo.code)}&uid=${encodeURIComponent(linkInfo.uid)}`
+    ? `https://kidsfullcare.web.app/share?code=${encodeURIComponent(linkInfo.code)}&uid=${encodeURIComponent(linkInfo.uid)}&name=${encodeURIComponent(linkInfo.name)}`
     : "";
 
   return (
@@ -111,6 +136,30 @@ function StudentLinkScreen() {
             </div>
           </div>
         )}
+
+        {authCompleteName !== null && (
+        <div
+          className="code-modal-overlay"
+          onClick={() => setAuthCompleteName(null)}
+        >
+          <div className="code-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="code-modal-success-icon">✓</div>
+            <p className="code-modal-label">인증이 완료되었습니다</p>
+            <p className="code-modal-value code-modal-success-name">
+              {authCompleteName ? `${authCompleteName}님` : "학부모님"}
+            </p>
+            <p className="code-modal-qr-fallback">과 연결되었습니다</p>
+
+            <button
+              type="button"
+              className="code-modal-dismiss-btn code-modal-success-btn"
+              onClick={() => setAuthCompleteName(null)}
+            >
+              확인
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
