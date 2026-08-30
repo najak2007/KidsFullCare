@@ -26,6 +26,7 @@ function StudentLinkScreen() {
   const [showCodeModal, setShowCodeModal] = useState(false);
   const [remainingSeconds, setRemainingSeconds] = useState(120); // 2분
   const [authCompleteName, setAuthCompleteName] = useState(null); // 연결된 학부모 이름
+  const [linkCodeResult, setLinkCodeResult] = useState(null); // { code, uid, name } or null
 
   // code가 새로 생기면 모달을 열고 타이머를 리셋합니다.
   useEffect(() => {
@@ -56,6 +57,7 @@ function StudentLinkScreen() {
   useEffect(() => {
     window.onNativeQRCodeAuthComplete = (payload) => {
       setShowCodeModal(false);
+      setLinkCodeResult(payload?.result || "")
       setAuthCompleteName(payload?.name || "");
     };
 
@@ -144,11 +146,15 @@ function StudentLinkScreen() {
         >
           <div className="code-modal" onClick={(e) => e.stopPropagation()}>
             <div className="code-modal-success-icon">✓</div>
-            <p className="code-modal-label">인증이 완료되었습니다</p>
+            <p className="code-modal-label">
+              {linkCodeResult ? linkCodeResult === "중복" ? "인증 상태입니다." : "인증이 완료되었습니다." : ""}
+            </p>
             <p className="code-modal-value code-modal-success-name">
               {authCompleteName ? `${authCompleteName}님` : "학부모님"}
             </p>
-            <p className="code-modal-qr-fallback">과 연결되었습니다</p>
+            <p className="code-modal-qr-fallback">
+              {linkCodeResult === "중복" ? "과 이미 인증 상태입니다." : "과 연결되었습니다"}
+            </p>
 
             <button
               type="button"
