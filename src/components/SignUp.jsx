@@ -14,6 +14,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import "../css/SignUp.css";
 import "../css/SignUp-apple-addon.css";
+import "../css/CodeModal.css";
 import StudentLinkScreen from "./StudentLinkScreen"; // 실제 경로에 맞게 조정하세요
 import ProfileImageButton from "./ProfileImageButton";
 import AddLinkButton from "./AddLinkButton";
@@ -179,8 +180,8 @@ function SignUp() {
   const [profileImage, setProfileImage] = useState(null);   // profile image에 대한 base64
   const [addUserUid, setAddUserUid] = useState(null);
   const [addUserName, setAddUserName] = useState(null);
+  const [linkResult, setLinkResult] = useState(null);
  
-
   // useEffect(등록은 최초 1회) 안에서도 최신 manualMode 값을 읽기 위한 ref
   const manualModeRef = useRef(manualMode);
   useEffect(() => {
@@ -291,10 +292,10 @@ function SignUp() {
     };
 
     window.onNativeAddFamilyForName = (payload) => {
-      if (!payload?.addUserName || !payload?.addUserUid) return;
+      if (!payload?.addUserName || !payload?.addUserUid || !payload?.linkResult) return;
+      setLinkResult(payload.linkResult);
       setAddUserUid(payload.addUserUid)
       setAddUserName(payload.addUserName);
-
     };
 
     notifyNativeReady();
@@ -305,6 +306,7 @@ function SignUp() {
       delete window.onNativeBiometricLogin;
       delete window.onNativeIncomingLinkCode;
       delete window.onNativeAddFamilyForName;
+      delete window.onNativeAuthResultComplete;
     };
   }, []);
 
@@ -324,6 +326,8 @@ function SignUp() {
     setRole(selected);
     setError("");
 
+    console.info("authState = " + authState + "selected = " + selected);
+
     if (selected === "student") {
       // 학생은 바로 저장하지 않고, 연결 코드 등 추가 정보를 먼저 입력받습니다.
       setRoleSubStep("studentLink");
@@ -339,8 +343,12 @@ function SignUp() {
     // studentInfo 예: { linkCode: "123456", grade: "3학년" } 등
     // StudentLinkScreen이 실제로 넘겨주는 필드에 맞게 사용하시면 됩니다.
     setError("");
-    setNativeLoading("role");
-    requestNativeSaveRole("student", studentInfo);
+    if (studentInfo?.nextStep == true) {
+      requestNativeSaveRole("student");
+    } else {
+      setNativeLoading("role");
+      requestNativeSaveRole("student", studentInfo);
+    }
   }, []);
 
   const handleStudentLinkBack = useCallback(() => {
@@ -355,7 +363,6 @@ function SignUp() {
         resetManualForm();
       }
     }
- //   if (authState === "needsRole" && roleSubStep === "studentLink") {
     if( authState === "needsRole") {
       return handleStudentLinkBack;
     }
@@ -406,6 +413,10 @@ function SignUp() {
       setNativeLoading("email");
       requestNativeEmailSignIn(manualEmail, manualPassword);
     }
+  };
+
+  const handleConfirmView = () => {
+    setLinkResult(null);
   };
 
   // ---- 렌더링: authState 값 하나로만 분기 ----
@@ -480,6 +491,33 @@ function SignUp() {
         <div className="signup-card">
           <p>메인 화면 (role: {role})</p>
         </div>
+        {linkResult !== null && (
+        <div
+           className="code-modal-overlay"
+          onClick={() => handleConfirmView(null)}
+        >
+          <div className="code-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="code-modal-success-icon">✓</div>
+            <p className="code-modal-label">
+              {linkResult ? linkResult === "중복" ? "인증 상태입니다." : linkResult === "에러" ? "인증 시 에러가 발생했습니다.\n다시 시도해 주세요." :"인증이 완료되었습니다." : ""}
+            </p>
+            <p className="code-modal-value code-modal-success-name">
+              {addUserName ? `${addUserName}님` : "학생"}
+            </p>
+            <p className="code-modal-qr-fallback">
+              {linkResult === "중복" ? "과 이미 인증 상태입니다." : linkResult === "에러" ?  "연결하지 못했습니다." : "과 연결되었습니다"}
+            </p>
+
+            <button
+              type="button"
+              className="code-modal-dismiss-btn code-modal-success-btn"
+              onClick={() => handleConfirmView(null)}
+            >
+              확인
+            </button>
+          </div>         
+        </div>
+        )}
       </div>
       </>
     );
