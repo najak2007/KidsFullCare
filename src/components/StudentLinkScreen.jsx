@@ -1,5 +1,5 @@
 // StudentLinkScreen.jsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { generateLinkCode } from "../services/generateLinkCode";
 import "../css/StudentLinkScreen.css";
@@ -16,7 +16,7 @@ function requestNativeQRCodeAuthTimeLimit(code) {
   }
 }
   
-function StudentLinkScreen() {
+function StudentLinkScreen({ onComplete, onBack, loading }) {
   const [linkInfo, setLinkInfo] = useState(null);
   const [modalMode, setModalMode] = useState("numeric"); // "qr" | "numeric"
 
@@ -27,7 +27,7 @@ function StudentLinkScreen() {
   const [remainingSeconds, setRemainingSeconds] = useState(120); // 2분
   const [authCompleteName, setAuthCompleteName] = useState(null); // 연결된 학부모 이름
   const [linkCodeResult, setLinkCodeResult] = useState(null); // { code, uid, name } or null
-
+  
   // code가 새로 생기면 모달을 열고 타이머를 리셋합니다.
   useEffect(() => {
     if (linkInfo) {
@@ -89,6 +89,13 @@ function StudentLinkScreen() {
     }
   };
 
+  const handleLinkCodeResult = useCallback((linkResult) => {
+    setAuthCompleteName(null)
+    if(linkResult === "추가" || linkResult === "중복") {
+      onComplete({ nextStep: true});
+    }
+  }, []);
+
   // QR에 넣을 값: 유니버설 링크 URL 형태로 인코딩합니다.
   // 카메라 앱으로 스캔하면 iOS/Android 둘 다 이 URL을 인식해서
   // (Associated Domains / App Links 설정이 되어 있다면) 앱을 직접 엽니다.
@@ -142,7 +149,7 @@ function StudentLinkScreen() {
         {authCompleteName !== null && (
         <div
           className="code-modal-overlay"
-          onClick={() => setAuthCompleteName(null)}
+          onClick={() => handleLinkCodeResult(linkCodeResult)}
         >
           <div className="code-modal" onClick={(e) => e.stopPropagation()}>
             <div className="code-modal-success-icon">✓</div>
@@ -159,7 +166,7 @@ function StudentLinkScreen() {
             <button
               type="button"
               className="code-modal-dismiss-btn code-modal-success-btn"
-              onClick={() => setAuthCompleteName(null)}
+              onClick={() => handleLinkCodeResult(linkCodeResult)}
             >
               확인
             </button>
