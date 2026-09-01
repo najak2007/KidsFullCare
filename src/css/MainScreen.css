@@ -1,0 +1,281 @@
+/* src/pages/MainScreen.css */
+
+.main-screen {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  background-color: #f2f2f7;
+}
+
+.main-screen-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: calc(env(safe-area-inset-top, 0px) + 16px) 16px 24px;
+}
+
+/* ------------------------------------------------------------
+ * 상단 헤더 (아바타 줄 + 알림)
+ * ------------------------------------------------------------ */
+.main-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.avatar-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.avatar-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.avatar-circle {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background-color: #e5e5ea;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.avatar-circle-self {
+  border: 2px solid #34c759;
+}
+
+.avatar-initial {
+  font-size: 20px;
+  font-weight: 600;
+  color: #8e8e93;
+}
+
+.avatar-name {
+  font-size: 12px;
+  color: #3a3a3c;
+  max-width: 60px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.avatar-add-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 2px dashed #c7c7cc;
+  background: transparent;
+  color: #8e8e93;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.notification-btn {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  color: #1c1c1e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.notification-dot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #ff3b30;
+}
+
+/* ------------------------------------------------------------
+ * 송금하기 카드
+ * ------------------------------------------------------------ */
+.send-money-card {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  border: none;
+  border-radius: 16px;
+  background-color: #1c1c1e;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 28px;
+}
+
+/* ------------------------------------------------------------
+ * 할 일 카드 더미 ↔ 그리드
+ * ------------------------------------------------------------ */
+.todo-stack-section {
+  position: relative;
+}
+
+.todo-stack-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  padding: 0 0 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1c1c1e;
+  cursor: pointer;
+}
+
+.todo-stack-chevron {
+  display: flex;
+  transition: transform 0.25s ease;
+}
+
+.todo-stack-chevron-up {
+  transform: rotate(180deg);
+}
+
+.todo-stack-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.25);
+  z-index: 40;
+}
+
+.todo-stack-container {
+  position: relative;
+  transition: height 0.3s ease;
+}
+
+.todo-stack-expanded {
+  position: relative;
+  z-index: 50;
+}
+
+.todo-card {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100px;
+  height: 100px;
+  border-radius: 16px;
+  border: none;
+  background-color: #ffffff;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px;
+  cursor: pointer;
+  transition: transform 0.35s cubic-bezier(0.34, 1.2, 0.4, 1);
+}
+
+.todo-card-emoji {
+  font-size: 24px;
+}
+
+.todo-card-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #1c1c1e;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+}
+
+/* ------------------------------------------------------------
+ * 하단 탭바
+ * ------------------------------------------------------------ */
+.tab-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 8px 4px calc(env(safe-area-inset-bottom, 0px) + 6px);
+  background-color: #ffffff;
+  border-top: 1px solid #e5e5ea;
+}
+
+.tab-bar-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  color: #8e8e93;
+  font-size: 11px;
+  padding: 4px 6px;
+  cursor: pointer;
+}
+
+.tab-bar-item-active {
+  color: #34c759;
+  font-weight: 600;
+}
+
+/* ------------------------------------------------------------
+ * 다크모드
+ * ------------------------------------------------------------ */
+@media (prefers-color-scheme: dark) {
+  .main-screen {
+    background-color: #000000;
+  }
+
+  .avatar-circle {
+    background-color: #2c2c2e;
+  }
+
+  .avatar-name {
+    color: #d1d1d6;
+  }
+
+  .notification-btn {
+    color: #f5f5f7;
+  }
+
+  .send-money-card {
+    background-color: #2c2c2e;
+    color: #ffffff;
+  }
+
+  .todo-stack-toggle {
+    color: #f5f5f7;
+  }
+
+  .todo-card {
+    background-color: #1c1c1e;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  }
+
+  .todo-card-title {
+    color: #f5f5f7;
+  }
+
+  .tab-bar {
+    background-color: #1c1c1e;
+    border-top-color: #2c2c2e;
+  }
+}

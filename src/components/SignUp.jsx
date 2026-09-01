@@ -15,7 +15,8 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import "../css/SignUp.css";
 import "../css/SignUp-apple-addon.css";
 import "../css/CodeModal.css";
-import StudentLinkScreen from "./StudentLinkScreen"; // 실제 경로에 맞게 조정하세요
+import StudentLinkScreen from "./StudentLinkScreen";
+import MainScreen from "./MainScreen";
 import ProfileImageButton from "./ProfileImageButton";
 import AddLinkButton from "./AddLinkButton";
 
@@ -181,6 +182,7 @@ function SignUp() {
   const [addUserUid, setAddUserUid] = useState(null);
   const [addUserName, setAddUserName] = useState(null);
   const [linkResult, setLinkResult] = useState(null);
+  const [familyMembers, setFamilyMembers] = useState(null);
  
   // useEffect(등록은 최초 1회) 안에서도 최신 manualMode 값을 읽기 위한 ref
   const manualModeRef = useRef(manualMode);
@@ -222,9 +224,14 @@ function SignUp() {
       setAuthState(payload.status);
       if (payload.name) setName(payload.name);
       if (payload.role) setRole(payload.role);
-      if (payload.imageBase64) {
-        const dataUrl = `data:image/jpeg;base64,${payload.imageBase64}`;
-        setProfileImage(dataUrl);
+      if (payload.status === "login") {
+        if (payload.imageBase64) {
+          const dataUrl = `data:image/jpeg;base64,${payload.imageBase64}`;
+          setProfileImage(dataUrl);
+        }
+        if (payload.familyMembers) {
+          setFamilyMembers(payload.familyMembers);
+        }
       }
       if (payload.status === "loggedOut") {
         setHintReturningUser(!!payload.returningUser);
@@ -486,11 +493,10 @@ function SignUp() {
   if (authState === "loggedIn") {
     return (
       <>
-      {loginTopbar}
-      <div className="signup-page">
-        <div className="signup-card">
-          <p>메인 화면 (role: {role})</p>
-        </div>
+      { <MainScreen 
+        selfProfile={{name: name, image: profileImage}}
+        familyMembers= {familyMembers}
+      /> }
         {linkResult !== null && (
         <div
            className="code-modal-overlay"
@@ -518,7 +524,6 @@ function SignUp() {
           </div>         
         </div>
         )}
-      </div>
       </>
     );
   }
