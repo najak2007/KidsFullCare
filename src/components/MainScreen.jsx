@@ -21,7 +21,7 @@ function AvatarRow({ selfProfile, familyMembers, onAddFamily }) {
     <div className="avatar-row">
       <AvatarCircle name={selfProfile?.name} image={selfProfile?.image} isSelf />
       {familyMembers.map((member) => (
-        <AvatarCircle key={member.uid} name={member.name} image={member.image} />
+        <AvatarFamilyCircle key={member.uid} name={member.name} image={member.image} />
       ))}
       <button type="button" className="avatar-add-btn" onClick={onAddFamily} aria-label="가족 추가">
         <PlusIcon />
@@ -33,23 +33,15 @@ function AvatarRow({ selfProfile, familyMembers, onAddFamily }) {
 function AvatarCircle({ name, image, isSelf }) {
     const [internalImage, setInternalImage] = useState(image || null);
     const [internalName, setInternalName] = useState(name || null);
-    const profileImage = image !== undefined ? image : internalImage;
-    const userName = name !== undefined ? name : internalName;
 
     useEffect(() => {
         window.onNativeProfileImagePicked = (payload) => {
-            if (!payload?.imageBase64) {
+            if (!payload?.imageBase64 || payload.imageBase64 === "") {
                 setInternalImage(null);
                 return;
             }
             const dataUrl = `data:image/jpeg;base64,${payload.imageBase64}`;
             setInternalImage(dataUrl);
-
-            if ( !payload?.userName) {
-                setInternalName(null);
-                return;
-            }
-            setInternalName(payload.userName);
         };
 
         return () => {
@@ -63,28 +55,30 @@ function AvatarCircle({ name, image, isSelf }) {
     }, []);
 
     return (
-    /*
-    <div className="avatar-item">
-      <div
-        className={`avatar-circle ${isSelf ? "avatar-circle-self" : ""}`}
-        style={image ? { backgroundImage: `url(${image})` } : undefined}
-      >
-        {!image && <span className="avatar-initial">{name?.[0] || "?"}</span>}
-      </div>
-      {isSelf && name && <span className="avatar-name">{name}</span>}
-    </div>
-    */
         <div className="avatar-item">
             <button 
                 type="button"
                 className={`avatar-circle ${isSelf ? "avatar-circle-self" : ""}`}
-                onClick={handleProfileSelectClick}
-                style={profileImage ? { backgroundImage: `url(${profileImage})` } : undefined}
+                onClick={isSelf ? handleProfileSelectClick : ""}
+                style={internalImage ? { backgroundImage: `url(${internalImage})` } : undefined}
             >
-            {!profileImage && <span className="avatar-initial">{userName?.[0] || "?"}</span>}
+            {!internalImage && <span className="avatar-initial">{internalName?.[0] || "?"}</span>}
             </button>
-        {isSelf && userName && <span className="avatar-name">{userName}</span>}
+        {isSelf && internalName && <span className="avatar-name">{internalName}</span>}
         </div>
+  );
+}
+
+function AvatarFamilyCircle({ name, image }) {
+    return (
+    <div className="avatar-item">
+      <div
+        className={`avatar-circle`}
+        style={image ? { backgroundImage: `url(${image})` } : undefined}
+      >
+        {!image && <span className="avatar-initial">{name?.[0] || "?"}</span>}
+      </div>
+    </div>
   );
 }
 
@@ -104,13 +98,13 @@ function MainHeader({ selfProfile, familyMembers, onAddFamily, onNotificationCli
 }
 
 /* ================================================================
- * "OO님에게 송금하기" 카드
+ * "OO님에게 메시지 보내기" 카드
  * ================================================================ */
-function SendMoneyCard({ targetName, onClick }) {
+function SendMessageCard({ targetName, onClick }) {
   if (!targetName) return null;
   return (
-    <button type="button" className="send-money-card" onClick={onClick}>
-      <span>{targetName} 님에게 송금하기</span>
+    <button type="button" className="send-message-card" onClick={onClick}>
+      <span>{targetName} 님에게 메시지 보내기</span>
       <ChevronRightIcon />
     </button>
   );
@@ -235,7 +229,7 @@ function MainScreen({
   hasUnreadNotification = false,
   onAddFamily,
   onNotificationClick,
-  onSendMoneyClick,
+  onSendMessageClick,
   onTodoClick,
 }) {
   const [activeTab, setActiveTab] = useState("home");
@@ -252,7 +246,7 @@ function MainScreen({
           hasUnreadNotification={hasUnreadNotification}
         />
 
-        <SendMoneyCard targetName={primaryFamilyName} onClick={onSendMoneyClick} />
+        <SendMessageCard targetName={primaryFamilyName} onClick={onSendMessageClick} />
 
         <TodoStack todos={todos} onTodoClick={onTodoClick} />
       </div>

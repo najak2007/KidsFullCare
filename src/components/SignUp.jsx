@@ -218,13 +218,35 @@ function SignUp() {
   }, []);
 
   useEffect(() => {
+
+// Native(SwiftUI)에서 응답을 돌려줄 때 수신하는 이벤트 리스너
+    const handleNativeResponse = (event) => {
+      const { method, path, status, payload } = event.detail;
+
+      console.log(`[iOS Native Response] Method: ${method}, Path: ${path}`, payload);
+
+      switch (method.toUpperCase()) {
+        case 'POST':
+          handlePostCallback(path, status, payload);
+          break;
+        case 'PUT':
+          handlePutCallback(path, status, payload);
+          break;
+        default:
+          console.warn('Unhandled method:', method);
+      }
+    };
+
+    window.addEventListener('NativeBridgeResponse', handleNativeResponse);
+    return () => window.removeEventListener('NativeBridgeResponse', handleNativeResponse);
+
     window.onNativeAuthState = (payload) => {
       setNativeLoading(null);
       setError("");
       setAuthState(payload.status);
       if (payload.name) setName(payload.name);
       if (payload.role) setRole(payload.role);
-      if (payload.status === "login") {
+      if (payload.status === "loggedIn") {
         if (payload.imageBase64) {
           const dataUrl = `data:image/jpeg;base64,${payload.imageBase64}`;
           setProfileImage(dataUrl);
@@ -316,6 +338,28 @@ function SignUp() {
       delete window.onNativeAuthResultComplete;
     };
   }, []);
+
+  const handlePostCallback = (path, status, data) => {
+    if (status === 200) {
+      console.log('POST 성공 처리:', data);
+    }
+  };
+
+  const handlePutCallback = (path, status, data) => {
+    if (status === 200) {
+      console.log('PUT 성공 처리:', data);
+    }
+  };
+
+  // React에서 iOS Native로 요청을 보낼 때 사용
+  const sendToNative = (method, action, body) => {
+    const requestData = { method, action, body };
+    if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.nativeBridge) {
+      window.webkit.messageHandlers.nativeBridge.postMessage(JSON.stringify(requestData));
+    } else {
+      console.error('iOS Native Bridge를 찾을 수 없습니다.');
+    }
+  };
 
   const handleAppleAuth = useCallback(() => {
     setError("");
@@ -448,14 +492,6 @@ function SignUp() {
       >
         재설정
       </button>
-    </div>
-  );
-
-  const loginTopbar = (
-    <div className="login-topbar">
-      <ProfileImageButton value={profileImage} onChange={setProfileImage} />
-
-      <AddLinkButton />
     </div>
   );
 
