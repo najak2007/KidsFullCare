@@ -13,6 +13,16 @@ function requestNativeProfileImagePicker() {
     }
 }
 
+function requestNativeFamilyMemberImage(uid) {
+    if (window.webkit?.messageHandlers?.fetchProfileImage) {
+        window.webkit.messageHandlers.fetchProfileImage.postMessage(uid);
+    } else if (window.AndroidBridge?.fetchProfileImage) {
+        window.AndroidBridge.fetchProfileImage(uid);
+    } else {
+        console.warn("Native 가족 구성원 이미지 선택 브릿지를 찾을 수 없습니다.");
+    }
+}
+
 /* ================================================================
  * 상단 아바타 줄: 본인 → family(연결된 학부모/학생들) → 추가 버튼
  * ================================================================ */
@@ -21,7 +31,7 @@ function AvatarRow({ selfProfile, familyMembers, onAddFamily }) {
     <div className="avatar-row">
       <AvatarCircle name={selfProfile?.name} image={selfProfile?.image} isSelf />
       {familyMembers.map((member) => (
-        <AvatarFamilyCircle key={member.uid} name={member.name} image={member.image} />
+        <AvatarFamilyCircle key={member.uid} name={member.name} image={member?.image} />
       ))}
       <button type="button" className="avatar-add-btn" onClick={onAddFamily} aria-label="가족 추가">
         <PlusIcon />

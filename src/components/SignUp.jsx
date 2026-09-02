@@ -218,28 +218,6 @@ function SignUp() {
   }, []);
 
   useEffect(() => {
-
-// Native(SwiftUI)에서 응답을 돌려줄 때 수신하는 이벤트 리스너
-    const handleNativeResponse = (event) => {
-      const { method, path, status, payload } = event.detail;
-
-      console.log(`[iOS Native Response] Method: ${method}, Path: ${path}`, payload);
-
-      switch (method.toUpperCase()) {
-        case 'POST':
-          handlePostCallback(path, status, payload);
-          break;
-        case 'PUT':
-          handlePutCallback(path, status, payload);
-          break;
-        default:
-          console.warn('Unhandled method:', method);
-      }
-    };
-
-    window.addEventListener('NativeBridgeResponse', handleNativeResponse);
-    return () => window.removeEventListener('NativeBridgeResponse', handleNativeResponse);
-
     window.onNativeAuthState = (payload) => {
       setNativeLoading(null);
       setError("");
@@ -339,17 +317,6 @@ function SignUp() {
     };
   }, []);
 
-  const handlePostCallback = (path, status, data) => {
-    if (status === 200) {
-      console.log('POST 성공 처리:', data);
-    }
-  };
-
-  const handlePutCallback = (path, status, data) => {
-    if (status === 200) {
-      console.log('PUT 성공 처리:', data);
-    }
-  };
 
   // React에서 iOS Native로 요청을 보낼 때 사용
   const sendToNative = (method, action, body) => {
