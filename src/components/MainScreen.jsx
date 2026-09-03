@@ -23,6 +23,39 @@ function requestNativeFamilyMemberImage(uid) {
     }
 }
 
+// 이 파일이 여러 번 로드되어도 (HMR 등) 중복 등록되지 않도록 가드합니다.
+const familyImageListeners = new Set();
+
+if (typeof window !== "undefined" && !window.__familyImageDispatcherInstalled) {
+  window.__familyImageDispatcherInstalled = true;
+
+  // window에 실제로 등록되는 건 이 "분배자" 하나뿐입니다.
+  // 네이티브가 이걸 호출하면, 등록된 리스너 전부에게 payload를 뿌려주고
+  // 각 리스너가 자기 uid와 일치하는지 스스로 판단합니다.
+  window.onNativeFamilyProfileImage = (payload) => {
+    familyImageListeners.forEach((listener) => listener(payload));
+  };
+}
+
+/*
+* 특정 uid의 이미지 응답만 받아서 콜백을 실행하는 Hook
+* 여러 AvatarFamilyCircle이 동시에 마운트돼 있어도 서로 안 겹칩니다.
+*/
+function useFamilyImageListener(uid, onImageReceived) {
+  useEffect(() => {
+    const listener = (payload) => {
+      if (payload?.uid !== uid) return;     // 내 uid가 아니면 무시
+      if (payload?.imageBase64) {
+        onImageReceived(payload.imageBase64);
+      }
+    };
+    familyImageListeners.add(listener);
+    return () => {
+      familyImageListeners.delete(listener);
+    };
+  }, [uid, onImageReceived])
+}
+
 /* ================================================================
  * 상단 아바타 줄: 본인 → family(연결된 학부모/학생들) → 추가 버튼
  * ================================================================ */
@@ -31,10 +64,14 @@ function AvatarRow({ selfProfile, familyMembers, onAddFamily }) {
     <div className="avatar-row">
       <AvatarCircle name={selfProfile?.name} image={selfProfile?.image} isSelf />
       {familyMembers.map((member) => (
-        <AvatarFamilyCircle key={member.uid} name={member.name} image={member?.image} />
+        <AvatarFamilyCircle key={member.uid} uid={member.uid} name={member.name} image={member?.image} />
       ))}
-      <button type="button" className="avatar-add-btn" onClick={onAddFamily} aria-label="가족 추가">
-        <PlusIcon />
+      <button type="button" className="avatar-add-btn" onClick={() => onAddFamily(selfProfile?.role)} aria-label="가족 추가">
+        {selfProfile?.role === "student" ? 
+        <QRCodeIcon />
+        : 
+        <PlusIcon /> }
+
       </button>
     </div>
   );
@@ -79,17 +116,36 @@ function AvatarCircle({ name, image, isSelf }) {
   );
 }
 
-function AvatarFamilyCircle({ name, image }) {
+function AvatarFamilyCircle({ uid, name, image }) {
+    const [internalImage, setInternalImage] = useState(image || null);
+
+    // 부모가 나중에 image prop을 채워주는 경우(예: loggedIn payload에 이미 있었던 경우) 반영
+    useEffect(() => {
+      setInternalImage(image || null);
+    }, [image]);
+
+    const handleImageReceived = useCallback((imageBase64) => {
+      setInternalImage(`data:image/jpeg;base64,${imageBase64}`);
+    }, []);
+
+    useFamilyImageListener(uid, handleImageReceived);
+
+    // 이미지가 아직 없을때 네이티브에 요청 (이미 있으면 재요청 안 함)
+    useEffect(() => {
+      if (internalImage || !uid) return;
+      requestNativeFamilyMemberImage(uid);
+    }, [uid]);
+
     return (
-    <div className="avatar-item">
-      <div
-        className={`avatar-circle`}
-        style={image ? { backgroundImage: `url(${image})` } : undefined}
-      >
-        {!image && <span className="avatar-initial">{name?.[0] || "?"}</span>}
+      <div className="avatar-item">
+        <div
+          className="avatar-circle"
+          style={internalImage ? { backgroundImage: `url(${internalImage})` } : undefined}
+        >
+          {!internalImage && <span className="avatar-initial">{name?.[0] || "?"}</span>}
+        </div>
       </div>
-    </div>
-  );
+    );
 }
 
 /* ================================================================
@@ -233,7 +289,7 @@ function TabBar({ activeTab, onChange }) {
  * 메인 화면
  * ================================================================ */
 function MainScreen({
-  selfProfile,          // { name, image }
+  selfProfile,          // { name, image, role }
   familyMembers = [],   // [{ uid, name, image }]
   todos = [],           // [{ id, title, emoji }]
   hasUnreadNotification = false,
@@ -245,13 +301,22 @@ function MainScreen({
   const [activeTab, setActiveTab] = useState("home");
   const primaryFamilyName = familyMembers[0]?.name;
 
+
+  const handleAddFamilyForAuth = useCallback((role) => {
+    if (role === "parent") {
+      onAddFamily(role);
+      return;
+    }
+  }, []);
+
+
   return (
     <div className="main-screen">
       <div className="main-screen-scroll">
         <MainHeader
           selfProfile={selfProfile}
           familyMembers={familyMembers}
-          onAddFamily={onAddFamily}
+          onAddFamily={handleAddFamilyForAuth}
           onNotificationClick={onNotificationClick}
           hasUnreadNotification={hasUnreadNotification}
         />
@@ -273,6 +338,30 @@ function PlusIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
       <path d="M12 5v14M5 12h14" />
+    </svg>
+  );
+}
+
+function QRCodeIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      {/* 좌상단 파인더 패턴 */}
+      <rect x="3" y="3" width="7" height="7" rx="1" />
+      <rect x="5.5" y="5.5" width="2" height="2" fill="currentColor" stroke="none" />
+
+      {/* 우상단 파인더 패턴 */}
+      <rect x="14" y="3" width="7" height="7" rx="1" />
+      <rect x="16.5" y="5.5" width="2" height="2" fill="currentColor" stroke="none" />
+
+      {/* 좌하단 파인더 패턴 */}
+      <rect x="3" y="14" width="7" height="7" rx="1" />
+      <rect x="5.5" y="16.5" width="2" height="2" fill="currentColor" stroke="none" />
+
+      {/* 우하단 데이터 셀들 */}
+      <rect x="14" y="14" width="2.5" height="2.5" fill="currentColor" stroke="none" />
+      <rect x="18.5" y="14" width="2.5" height="2.5" fill="currentColor" stroke="none" />
+      <rect x="14" y="18.5" width="2.5" height="2.5" fill="currentColor" stroke="none" />
+      <rect x="18.5" y="18.5" width="2.5" height="2.5" fill="currentColor" stroke="none" />
     </svg>
   );
 }

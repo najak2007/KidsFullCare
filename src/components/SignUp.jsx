@@ -116,6 +116,14 @@ function notifyNativeInputFocus(fieldName) {
   }
 }
 
+function requestNativeAddFamilyHandler(role) {
+  if (window.webkit?.messageHandlers?.addFamilyReq) {
+    window.webkit?.messageHandlers.addFamilyReq.postMessage(role)
+  } else if (window.AndroidBridge?.addFamilyReq) {
+    window.AndroidBridge.addFamilyReq(role);
+  }
+}
+
 function usePlatform() {
   const [platform] = useState(() => {
     if (typeof navigator === "undefined") return "web";
@@ -374,6 +382,10 @@ function SignUp() {
     setRole(null);
   }, []);
 
+  const handleAddFamilyReq = useCallback((role) => {
+    requestNativeAddFamilyHandler(role);
+  }, []);
+
   const getBackAction = () => {
     if (authState === "loggedOut" && showManualForm) {
       return () => {
@@ -497,8 +509,9 @@ function SignUp() {
     return (
       <>
       { <MainScreen 
-        selfProfile={{name: name, image: profileImage}}
+        selfProfile={{name: name, image: profileImage, role: role}}
         familyMembers= {familyMembers}
+        onAddFamily= {handleAddFamilyReq}
       /> }
         {linkResult !== null && (
         <div
@@ -707,7 +720,7 @@ function SignUp() {
           </div>
         )}
 
-        {authState === "needsRole" && roleSubStep === "studentLink" && (
+        { authState === "needsRole" && roleSubStep === "studentLink" && (
           <StudentLinkScreen
             onComplete={handleStudentLinkComplete}
             onBack={handleStudentLinkBack}
