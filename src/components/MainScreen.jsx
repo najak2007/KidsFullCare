@@ -1,6 +1,8 @@
 // src/pages/MainScreen.jsx
 import { useState, useRef, useCallback, useEffect, useLayoutEffect } from "react";
 import "../css/MainScreen.css";
+import "./StudentLinkScreen";
+import StudentLinkScreen from "./StudentLinkScreen";
 
 
 function requestNativeProfileImagePicker() {
@@ -300,6 +302,7 @@ function MainScreen({
 }) {
   const [activeTab, setActiveTab] = useState("home");
   const primaryFamilyName = familyMembers[0]?.name;
+  const [authQRCodeModal, setAuthQRCodeModal] = useState(false);
 
 
   const handleAddFamilyForAuth = useCallback((role) => {
@@ -307,8 +310,16 @@ function MainScreen({
       onAddFamily(role);
       return;
     }
+    setAuthQRCodeModal(true);
   }, []);
 
+  const handleLinkAuthComplete = useCallback(() => {
+    setAuthQRCodeModal(false);
+  }, []);
+
+  const handleLinkAuthBack = useCallback(() => {
+    setAuthQRCodeModal(false);
+  }, []);
 
   return (
     <div className="main-screen">
@@ -321,12 +332,21 @@ function MainScreen({
           hasUnreadNotification={hasUnreadNotification}
         />
 
+      { authQRCodeModal === true && (
+        <StudentLinkScreen
+          onComplete={handleLinkAuthComplete}
+          onBack={handleLinkAuthBack}
+          directShow={authQRCodeModal === true}
+        />
+      )}
+
         <SendMessageCard targetName={primaryFamilyName} onClick={onSendMessageClick} />
 
         <TodoStack todos={todos} onTodoClick={onTodoClick} />
       </div>
 
       <TabBar activeTab={activeTab} onChange={setActiveTab} />
+
     </div>
   );
 }
