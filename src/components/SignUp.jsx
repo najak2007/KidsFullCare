@@ -386,6 +386,17 @@ function SignUp() {
     requestNativeAddFamilyHandler(role);
   }, []);
 
+  const handleSendMessage = useCallback((uid, name) => {
+    if (!uid && !name) return;
+    if (window.webkit?.messageHandlers?.sendMessage) {
+      window.webkit.messageHandlers.sendMessage.postMessage({ uid, name });
+    } else if (window.AndroidBridge?.sendMessage) {
+      window.AndroidBridge.sendMessage({ uid, name });
+    } else {
+      console.warn("Native 메시지 보내기 브릿지를 찾을 수 없습니다.");
+    }   
+  }, []);
+
   const getBackAction = () => {
     if (authState === "loggedOut" && showManualForm) {
       return () => {
@@ -512,6 +523,7 @@ function SignUp() {
         selfProfile={{name: name, image: profileImage, role: role}}
         familyMembers= {familyMembers}
         onAddFamily= {handleAddFamilyReq}
+        onSendMessageClick= {handleSendMessage}
       /> }
         {linkResult !== null && (
         <div

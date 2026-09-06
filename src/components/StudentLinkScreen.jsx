@@ -177,7 +177,9 @@ function StudentLinkScreen({ onComplete, onBack, loading, directShow }) {
           onClick={() => handleLinkCodeResult(linkCodeResult)}
         >
           <div className="code-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="code-modal-success-icon">✓</div>
+            { linkCodeResult === "중복" ? 
+            <div className="code-modal-overlap-icon">✓</div>  : 
+            <div className="code-modal-success-icon">✔</div> }
             <p className="code-modal-label">
               {linkCodeResult
                 ? linkCodeResult === "중복"
@@ -191,7 +193,15 @@ function StudentLinkScreen({ onComplete, onBack, loading, directShow }) {
             <p className="code-modal-qr-fallback">
               {linkCodeResult === "중복" ? "과 이미 인증 상태입니다." : "과 연결되었습니다"}
             </p>
-
+              
+            { linkCodeResult === "중복" ? (
+            <button
+              type="button"
+              className="code-modal-dismiss-btn code-modal-overlap-btn"
+              onClick={() => handleLinkCodeResult(linkCodeResult)}
+            >
+              확인
+            </button> ) : (
             <button
               type="button"
               className="code-modal-dismiss-btn code-modal-success-btn"
@@ -199,7 +209,9 @@ function StudentLinkScreen({ onComplete, onBack, loading, directShow }) {
             >
               확인
             </button>
+            )}
           </div>
+        
         </div>
       )}
     </div>

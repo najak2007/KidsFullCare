@@ -301,6 +301,8 @@ function MainScreen({
   onTodoClick,
 }) {
   const [activeTab, setActiveTab] = useState("home");
+  const primaryFamilyMember = familyMembers[0] || null;
+  const primaryFamilyUid = familyMembers[0]?.uid;
   const primaryFamilyName = familyMembers[0]?.name;
   const [authQRCodeModal, setAuthQRCodeModal] = useState(false);
 
@@ -319,6 +321,10 @@ function MainScreen({
 
   const handleLinkAuthBack = useCallback(() => {
     setAuthQRCodeModal(false);
+  }, []);
+
+  const handleSendMessage = useCallback((primaryFamilyMember) => {
+    onSendMessageClick(primaryFamilyMember?.uid, primaryFamilyMember?.name);
   }, []);
 
   return (
@@ -340,7 +346,7 @@ function MainScreen({
         />
       )}
 
-        <SendMessageCard targetName={primaryFamilyName} onClick={onSendMessageClick} />
+        <SendMessageCard targetName={primaryFamilyName} onClick={ () => handleSendMessage(primaryFamilyMember) } />
 
         <TodoStack todos={todos} onTodoClick={onTodoClick} />
       </div>
