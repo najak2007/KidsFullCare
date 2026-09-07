@@ -3,6 +3,7 @@ import { useState, useRef, useCallback, useEffect, useLayoutEffect } from "react
 import "../css/MainScreen.css";
 import "./StudentLinkScreen";
 import StudentLinkScreen from "./StudentLinkScreen";
+import StudentMenuGrid from "./StudentMenuGrid";
 
 
 function requestNativeProfileImagePicker() {
@@ -172,7 +173,7 @@ function SendMessageCard({ targetName, onClick }) {
   if (!targetName) return null;
   return (
     <button type="button" className="send-message-card" onClick={onClick}>
-      <span>{targetName} 님에게 메시지 보내기</span>
+      <span>{targetName} 님에게 알림 보내기</span>
       <ChevronRightIcon />
     </button>
   );
@@ -305,6 +306,7 @@ function MainScreen({
   const primaryFamilyUid = familyMembers[0]?.uid;
   const primaryFamilyName = familyMembers[0]?.name;
   const [authQRCodeModal, setAuthQRCodeModal] = useState(false);
+  const currentRole = selfProfile?.role;
 
 
   const handleAddFamilyForAuth = useCallback((role) => {
@@ -349,6 +351,29 @@ function MainScreen({
         <SendMessageCard targetName={primaryFamilyName} onClick={ () => handleSendMessage(primaryFamilyMember) } />
 
         <TodoStack todos={todos} onTodoClick={onTodoClick} />
+
+        { currentRole === "student" && (
+          <StudentMenuGrid
+            onSelect={(menu) => {
+              switch(menu.key) {
+                case "sschool":
+                  navigateTo(menu.label);
+                  break;
+                case "academy":
+                  navigateTo(menu.label);
+                  break;
+                case "parentLink":
+                  navigateTo(menu.label);
+                  break;
+                default:
+                  console.warn("아직 연결되지 않은 메뉴: ", menu.key);
+                
+              }
+            }}
+          />
+        )}
+
+
       </div>
 
       <TabBar activeTab={activeTab} onChange={setActiveTab} />
