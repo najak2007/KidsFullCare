@@ -1,7 +1,6 @@
 // src/pages/MainScreen.jsx
 import { useState, useRef, useCallback, useEffect, useLayoutEffect } from "react";
 import "../css/MainScreen.css";
-import "./StudentLinkScreen";
 import StudentLinkScreen from "./StudentLinkScreen";
 import StudentMenuGrid from "./StudentMenuGrid";
 
@@ -300,6 +299,7 @@ function MainScreen({
   onNotificationClick,
   onSendMessageClick,
   onTodoClick,
+  onNavigate,
 }) {
   const [activeTab, setActiveTab] = useState("home");
   const primaryFamilyMember = familyMembers[0] || null;
@@ -356,14 +356,14 @@ function MainScreen({
           <StudentMenuGrid
             onSelect={(menu) => {
               switch(menu.key) {
-                case "sschool":
-                  navigateTo(menu.label);
+                case "school":
+                  onNavigate(menu.command);
                   break;
                 case "academy":
-                  navigateTo(menu.label);
+                  onNavigate(menu.command);
                   break;
                 case "parentLink":
-                  navigateTo(menu.label);
+                  onNavigate(menu.command);
                   break;
                 default:
                   console.warn("아직 연결되지 않은 메뉴: ", menu.key);

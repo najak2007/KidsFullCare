@@ -1,0 +1,312 @@
+/* SchoolRegisterScreen.css */
+
+.school-register-screen {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #f2f2f7;
+}
+
+/* ---------- 상단 바 (뒤로가기) ---------- */
+
+.school-register-topbar {
+  display: flex;
+  align-items: center;
+  padding: 0 4px;
+  /* MainScreen(.main-screen-scroll)과 동일한 공식으로 상단 여백을 맞춤 */
+  padding-top: calc(env(safe-area-inset-top, 0px) + 16px);
+  height: calc(52px + env(safe-area-inset-top, 0px) + 16px);
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.school-register-back-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: none;
+  border: none;
+  color: #1c1c1e;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.school-register-title {
+  flex: 1;
+  margin: 0;
+  text-align: center;
+  font-size: 17px;
+  font-weight: 600;
+  color: #1c1c1e;
+  /* 뒤로가기 버튼과 spacer가 같은 폭이라 타이틀이 정확히 중앙에 옵니다 */
+}
+
+.school-register-topbar-spacer {
+  width: 44px;
+  flex-shrink: 0;
+}
+
+/* ---------- 본문 ---------- */
+
+.school-register-content {
+  flex: 1;
+  padding: 12px 20px 32px;
+  box-sizing: border-box;
+}
+
+.school-register-guide {
+  margin: 8px 0 16px;
+  font-size: 15px;
+  color: #6b6b70;
+}
+
+.school-register-error {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: #ff3b30;
+}
+
+/* ---------- 검색 폼 ---------- */
+
+.school-search-form {
+  display: flex;
+  gap: 8px;
+}
+
+.school-search-input {
+  flex: 1;
+  height: 46px;
+  padding: 0 14px;
+  border: 1px solid #e0e0e2;
+  border-radius: 12px;
+  font-size: 15px;
+  box-sizing: border-box;
+  background: #f7f7f8;
+}
+
+.school-search-input:focus {
+  outline: none;
+  border-color: #4c8dff;
+  background: #ffffff;
+}
+
+.school-search-btn {
+  height: 46px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 12px;
+  background: #4c8dff;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.school-search-btn:disabled {
+  background: #b9d1ff;
+  cursor: default;
+}
+
+/* ---------- 검색 상태 ---------- */
+
+.school-search-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+  font-size: 14px;
+  color: #6b6b70;
+}
+
+.school-search-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #d9d9dc;
+  border-top-color: #4c8dff;
+  border-radius: 50%;
+  animation: school-search-spin 0.7s linear infinite;
+}
+
+@keyframes school-search-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.school-search-empty {
+  margin-top: 24px;
+  font-size: 14px;
+  color: #9a9aa0;
+  text-align: center;
+}
+
+/* ---------- 검색 결과 리스트 ---------- */
+
+.school-result-list {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.school-result-item {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1px solid #ececee;
+  border-radius: 12px;
+  background: #ffffff;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.school-result-item:active {
+  background: #f2f6ff;
+  border-color: #4c8dff;
+}
+
+.school-result-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1c1c1e;
+}
+
+.school-result-address {
+  font-size: 13px;
+  color: #8a8a8e;
+}
+
+/* ---------- 선택된 학교 카드 (학년 선택 단계) ---------- */
+
+.school-selected-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #f2f6ff;
+  margin-bottom: 8px;
+}
+
+.school-selected-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.school-selected-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1c1c1e;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.school-selected-address {
+  font-size: 12.5px;
+  color: #6b6b70;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.school-selected-change-btn {
+  flex-shrink: 0;
+  padding: 8px 12px;
+  border: 1px solid #4c8dff;
+  border-radius: 20px;
+  background: #ffffff;
+  color: #4c8dff;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ---------- 학년 선택 그리드 ---------- */
+
+.grade-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.grade-item {
+  padding: 14px 0;
+  border: 1px solid #e0e0e2;
+  border-radius: 12px;
+  background: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1c1c1e;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 0.12s ease, background 0.12s ease, color 0.12s ease;
+}
+
+.grade-item.selected {
+  border-color: #4c8dff;
+  background: #4c8dff;
+  color: #ffffff;
+}
+
+/* ---------- 등록 완료 버튼 ---------- */
+
+.school-register-submit-btn {
+  width: 100%;
+  height: 50px;
+  margin-top: 28px;
+  border: none;
+  border-radius: 14px;
+  background: #4c8dff;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.school-register-submit-btn:disabled {
+  background: #b9d1ff;
+  cursor: default;
+}
+
+/* ------------------------------------------------------------
+ * 다크모드
+ * ------------------------------------------------------------ */
+@media (prefers-color-scheme: dark) {
+    .school-register-screen {
+        background: #000000;
+    }    
+
+    .school-register-guide {
+        color: #ffffff;
+    }
+
+    .school-register-title {
+        color: #ffffff;
+    }
+
+    .school-register-back-btn {
+        color: #ffffff;
+    }
+
+    .school-search-input {
+        background: #000000;
+    }
+
+    .school-search-input:focus {
+        background: #000000;
+    }
+}

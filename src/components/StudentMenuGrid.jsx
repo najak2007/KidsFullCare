@@ -7,36 +7,42 @@ const DEFAULT_STUDENT_MENUS = [
     label: "학교 등록",
     icon: "🏫",
     color: "#4C8DFF",
+    command: "schoolRegister",
   },
   {
     key: "academy",
     label: "학원 등록",
     icon: "📚",
     color: "#FF9F40",
+    command: "academyRegister",
   },
   {
     key: "class",
     label: "수업 등록",
     icon: "📝",
     color: "#34C77B",
+    command: "classRegister",
   },
   {
     key: "timetable",
     label: "시간표",
     icon: "🗓️",
     color: "#A566FF",
+    command: "timetableRegister",
   },
   {
     key: "notice",
     label: "알림장",
     icon: "📢",
     color: "#FF5A6E",
+    command: "noticeRegister",
   },
   {
     key: "parentLink",
     label: "부모님 연결",
     icon: "🔗",
     color: "#20C4C8",
+    command: "parentLinkRegister",
   },
 ];
 

@@ -17,8 +17,10 @@ import "../css/SignUp-apple-addon.css";
 import "../css/CodeModal.css";
 import StudentLinkScreen from "./StudentLinkScreen";
 import MainScreen from "./MainScreen";
-import ProfileImageButton from "./ProfileImageButton";
+//import ProfileImageButton from "./ProfileImageButton";
 import AddLinkButton from "./AddLinkButton";
+
+import SchoolRegisterScreen from "./SchoolRegisterScreen";
 
 
 /* ------------------------------------------------------------
@@ -191,7 +193,14 @@ function SignUp() {
   const [addUserName, setAddUserName] = useState(null);
   const [linkResult, setLinkResult] = useState(null);
   const [familyMembers, setFamilyMembers] = useState(null);
- 
+  const [currentScreen, setCurrentScreen] = useState({ name: "main"});
+
+  const navigateTo = (screenName, params = {}) => {
+    setCurrentScreen({ name: screenName, ...params });
+  };
+
+  const goBack = () => navigateTo("main");
+
   // useEffect(등록은 최초 1회) 안에서도 최신 manualMode 값을 읽기 위한 ref
   const manualModeRef = useRef(manualMode);
   useEffect(() => {
@@ -519,13 +528,21 @@ function SignUp() {
   if (authState === "loggedIn") {
     return (
       <>
-      { <MainScreen 
-        selfProfile={{name: name, image: profileImage, role: role}}
-        familyMembers= {familyMembers}
-        onAddFamily= {handleAddFamilyReq}
-        onSendMessageClick= {handleSendMessage}
-      /> }
-        {linkResult !== null && (
+      { currentScreen.name === "main" && (
+        <MainScreen 
+          selfProfile={{name: name, image: profileImage, role: role}}
+          familyMembers= {familyMembers}
+          onAddFamily= {handleAddFamilyReq}
+          onSendMessageClick= {handleSendMessage}
+          onNavigate={navigateTo}
+        /> 
+      )}
+
+      { currentScreen.name === "schoolRegister" && (
+        <SchoolRegisterScreen onBack={goBack} />
+      )}
+
+      { linkResult !== null && (
         <div
            className="code-modal-overlay"
           onClick={() => handleConfirmView(null)}
