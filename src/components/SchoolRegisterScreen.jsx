@@ -9,11 +9,10 @@
 //   3) 학년 선택 → 저장 요청 (기존 네이티브 저장 브릿지 유지)
 //
 import { useState, useCallback, useRef, useEffect } from "react";
-import { getFunctions, httpsCallable } from "firebase/functions";
-import { firebaseApp } from "../firebase"; // 프로젝트의 실제 firebase 초기화 파일 경로에 맞게 수정하세요
+import { httpsCallable } from "firebase/functions";
+import { functions } from "../firebase"; // firebase.js에서 만든 인스턴스 그대로 사용 (리전 일치 보장)
 import "../css/SchoolRegisterScreen.css";
 
-const functions = getFunctions(firebaseApp);
 const searchSchoolFn = httpsCallable(functions, "searchSchool");
 
 /* ------------------------------------------------------------
@@ -81,6 +80,8 @@ function SchoolRegisterScreen({ onBack, onComplete }) {
     setSearching(true);
     setSearched(false);
     setSearchResults([]);
+
+    console.warn("schoolName" + trimmed);
 
     try {
       const { data } = await searchSchoolFn({ schoolName: trimmed });

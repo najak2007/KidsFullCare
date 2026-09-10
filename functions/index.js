@@ -62,4 +62,5 @@ exports.cleanupExpiredLinkCodes = onSchedule(
     console.log(`만료된 linkCodes ${expiredSnapshot.size}개 삭제 완료`);
   }
 );
- 
+
+exports.searchSchool = require("./searchSchool").searchSchool;
