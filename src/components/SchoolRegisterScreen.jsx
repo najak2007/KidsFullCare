@@ -122,10 +122,11 @@ function SchoolRegisterScreen({ onBack, onComplete }) {
     setError("");
     setSaving(true);
     requestNativeSaveSchoolRegister({
-      name: selectedSchool.name,
-      address: selectedSchool.address,
-      officeCode: selectedSchool.officeCode,
-      schoolCode: selectedSchool.schoolCode,
+      SCHUL_NM: selectedSchool.SCHUL_NM,
+      ORG_RDNMA: selectedSchool.ORG_RDNMA,
+      ORG_RDNDA: selectedSchool.ORG_RDNDA,
+      ATPT_OFCDC_SC_CODE: selectedSchool.ATPT_OFCDC_SC_CODE,
+      SD_SCHUL_CODE: selectedSchool.SD_SCHUL_CODE,
       grade: selectedGrade,
     });
   }, [selectedSchool, selectedGrade]);
@@ -139,6 +140,8 @@ function SchoolRegisterScreen({ onBack, onComplete }) {
     }
     onBack?.();
   }, [step, handleChangeSchool, onBack]);
+
+  const getGradeNumber = (grade) => parseInt(grade, 10);
 
   return (
     <div className="school-register-screen">
@@ -200,14 +203,14 @@ function SchoolRegisterScreen({ onBack, onComplete }) {
             {!searching && searchResults.length > 0 && (
               <ul className="school-result-list">
                 {searchResults.map((school) => (
-                  <li key={school.id ?? `${school.name}-${school.address}`}>
+                  <li key={school.id ?? `${school.SCHUL_NM}-${school.ORG_RDNMA}`}>
                     <button
                       type="button"
                       className="school-result-item"
                       onClick={() => handleSelectSchool(school)}
                     >
-                      <span className="school-result-name">{school.name}</span>
-                      <span className="school-result-address">{school.address}</span>
+                      <span className="school-result-name">{school.SCHUL_NM}</span>
+                      <span className="school-result-address">{school.ORG_RDNMA}</span>
                     </button>
                   </li>
                 ))}
@@ -220,8 +223,8 @@ function SchoolRegisterScreen({ onBack, onComplete }) {
           <>
             <div className="school-selected-card">
               <div className="school-selected-info">
-                <span className="school-selected-name">{selectedSchool.name}</span>
-                <span className="school-selected-address">{selectedSchool.address}</span>
+                <span className="school-selected-name">{selectedSchool.SCHUL_NM}</span>
+                <span className="school-selected-address">{selectedSchool.ORG_RDNMA}</span>
               </div>
               <button
                 type="button"
@@ -235,15 +238,17 @@ function SchoolRegisterScreen({ onBack, onComplete }) {
             <p className="school-register-guide">학년을 선택해주세요.</p>
 
             <div className="grade-grid">
-              {GRADE_OPTIONS.map((grade) => (
-                <button
-                  key={grade}
-                  type="button"
-                  className={`grade-item ${selectedGrade === grade ? "selected" : ""}`}
-                  onClick={() => handleSelectGrade(grade)}
-                >
-                  {grade}
-                </button>
+              {GRADE_OPTIONS
+                .filter((grade) => getGradeNumber(grade) <= (selectedSchool.schoollevel === "2" ? 3 : GRADE_OPTIONS.length))
+                .map((grade) => (
+                  <button
+                    key={grade}
+                    type="button"
+                    className={`grade-item ${selectedGrade === grade ? "selected" : ""}`}
+                    onClick={() => handleSelectGrade(grade)}
+                  >
+                    {grade}
+                  </button>
               ))}
             </div>
 
