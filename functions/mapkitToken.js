@@ -5,7 +5,7 @@ const jwt = require("jsonwebtoken");
 const appleMapKitPrivateKey = defineSecret("APPLE_MAPKIT_PRIVATE_KEY");
 
 const TEAM_ID = "9KH64W7EHZ";
-const KEY_ID = "YOUR_KEY_ID"; // .p8 발급 시 받은 Key ID (Maps ID와 다름)
+const KEY_ID = "MWJ25H793X"; // .p8 발급 시 받은 Key ID (Maps ID와 다름)
 const MAPS_ID = "9KH64W7EHZ.maps.com.najak.KidsFullCare"; // origin(iss/sub) 확인용
 
 exports.getMapKitToken = onCall(
