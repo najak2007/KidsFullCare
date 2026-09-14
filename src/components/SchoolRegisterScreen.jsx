@@ -12,6 +12,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { httpsCallable } from "firebase/functions";
 import { functions } from "../firebase"; // firebase.js에서 만든 인스턴스 그대로 사용 (리전 일치 보장)
 import "../css/SchoolRegisterScreen.css";
+import SchoolAppleMap from "./SchoolAppleMap";
 
 const searchSchoolFn = httpsCallable(functions, "searchSchool");
 
@@ -251,6 +252,11 @@ function SchoolRegisterScreen({ onBack, onComplete }) {
                   </button>
               ))}
             </div>
+
+            <SchoolAppleMap 
+              address={selectedSchool.ORG_RDNMA}
+              schoolName={selectedSchool.SCHUL_NM}
+            />
 
             {error && <p className="school-register-error">{error}</p>}
 

@@ -8,6 +8,47 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    function isLinkedParent(studentUid) {
+      return request.auth != null &&
+              request.auth.uid in
+                get(/databases/$(database)/documents/users/$(studentUid)).data.get("familyUids", []);
+    }
+
+    function touchesOnlySchoolInfo() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(["schoolInfo"]);
+    }
+
+    match /users/{userId} {
+      // 1. 읽기: 본인 로그인 사용자만 허용
+      allow read: if request.auth != null && request.auth.uid == userId;
+
+      // 2. 생성 (1단계: Sign in with Apple 완료 후 초기 문서 생성)
+      // role 조건 검증을 제거하여 최초 가입 시 문서가 문제없이 생성되도록 합니다.
+      allow create: if request.auth != null && request.auth.uid == userId;
+
+      // 3. 수정
+      //   - 본인 문서: role 값은 "parent"/"student"만 허용 (기존 로직 그대로)
+      //   - 연결된 부모: 자녀 문서의 schoolInfo 필드만 수정 가능
+      allow update: if request.auth != null
+               && (
+                 (
+                   request.auth.uid == userId
+                   && (
+                     !("role" in request.resource.data) ||
+                     request.resource.data.role in ["parent", "student"]
+                   )
+                 )
+                 ||
+                 (
+                   isLinkedParent(userId)
+                   && touchesOnlySchoolInfo()
+                 )
+               );
+
+      // 본인 문서만 삭제 가능 (회원 탈퇴용)
+      allow delete: if request.auth != null && request.auth.uid == userId;
+    }
+
     // users 컬렉션 규칙
     match /users/{userId} {
       // 1. 읽기: 본인 로그인 사용자만 허용

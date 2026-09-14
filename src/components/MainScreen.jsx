@@ -4,7 +4,6 @@ import "../css/MainScreen.css";
 import StudentLinkScreen from "./StudentLinkScreen";
 import StudentMenuGrid from "./StudentMenuGrid";
 
-
 function requestNativeProfileImagePicker() {
     if (window.webkit?.messageHandlers?.pickProfileImage) {
         window.webkit.messageHandlers.pickProfileImage.postMessage(null);
@@ -23,6 +22,16 @@ function requestNativeFamilyMemberImage(uid) {
     } else {
         console.warn("Native 가족 구성원 이미지 선택 브릿지를 찾을 수 없습니다.");
     }
+}
+
+function requestNativeSchoolInfo() {
+  if (window.webkit?.messageHandlers?.schoolInfoReq) {
+    window.webkit.messageHandlers.schoolInfoReq.postMessage(null);
+  } else if(window.AndroidBridge?.schoolInfoReq) {
+    window.AndroidBridge.schoolInfoReq();
+  } else {
+    console.warn("Native 학교 정보 조회 브릿지를 찾을 수 없습니다.");
+  }
 }
 
 // 이 파일이 여러 번 로드되어도 (HMR 등) 중복 등록되지 않도록 가드합니다.
@@ -307,7 +316,15 @@ function MainScreen({
   const primaryFamilyName = familyMembers[0]?.name;
   const [authQRCodeModal, setAuthQRCodeModal] = useState(false);
   const currentRole = selfProfile?.role;
+  const [schoolInfo, setSchoolInfo] = useState(null);
 
+  useEffect(() => {
+    window.onNativeSchoolInfo = (payload) => {
+      if(!payload?.SCHUL_NM && !payload?.ORG_RDNMA && !payload?.GRADE) {
+        setSchoolInfo({name: payload.SCHUL_NM, address: payload.ORG_RDNMA, grade: payload.GRADE });
+      }
+    };
+  }, []);
 
   const handleAddFamilyForAuth = useCallback((role) => {
     if (role === "parent") {
@@ -328,6 +345,14 @@ function MainScreen({
   const handleSendMessage = useCallback((primaryFamilyMember) => {
     onSendMessageClick(primaryFamilyMember?.uid, primaryFamilyMember?.name);
   }, []);
+
+  const handleSchoolInfoRequest = useCallback (() => {
+    requestNativeSchoolInfo();
+  }, []);
+
+  if (currentRole === "student") {
+    handleSchoolInfoRequest();
+  }
 
   return (
     <div className="main-screen">
