@@ -238,6 +238,9 @@ function SignUp() {
     window.onNativeAuthState = (payload) => {
       setNativeLoading(null);
       setError("");
+
+      console.info("onNativeAuthState:", payload.status);
+
       setAuthState(payload.status);
       if (payload.name) setName(payload.name);
       if (payload.role) setRole(payload.role);
@@ -357,21 +360,23 @@ function SignUp() {
     requestNativeGoogleSignIn();
   }, []);
 
-  const handleRoleSelect = useCallback((selected) => {
-    setRole(selected);
+  const handleRoleSelect = useCallback(( authState, selectedRole) => {
+    setRole(selectedRole);
+    setAuthState(authState);
     setError("");
 
-    console.info("authState = " + authState + "selected = " + selected);
+    console.info("authState = " + authState + " selected = " + selectedRole);
 
-    if (selected === "student") {
+    if (selectedRole === "student") {
       // 학생은 바로 저장하지 않고, 연결 코드 등 추가 정보를 먼저 입력받습니다.
+      console.info("학생은 연결 코드 입력 화면으로 이동합니다.");
       setRoleSubStep("studentLink");
       return;
     }
 
     // 학부모는 추가 정보가 필요 없으므로 바로 저장합니다.
     setNativeLoading("role");
-    requestNativeSaveRole(selected);
+    requestNativeSaveRole(selectedRole);
   }, []);
 
   const handleStudentLinkComplete = useCallback((studentInfo) => {
@@ -731,7 +736,7 @@ function SignUp() {
             <button
               type="button"
               className={`role-card role-parent ${role === "parent" ? "selected" : ""}`}
-              onClick={() => handleRoleSelect("parent")}
+              onClick={() => handleRoleSelect("needsRole", "parent")}
               disabled={nativeLoading !== null}
             >
               <span className="role-emoji">👩‍👧</span>
@@ -740,7 +745,7 @@ function SignUp() {
             <button
               type="button"
               className={`role-card role-student ${role === "student" ? "selected" : ""}`}
-              onClick={() => handleRoleSelect("student")}
+              onClick={() => handleRoleSelect("needsRole", "student")}
               disabled={nativeLoading !== null}
             >
               <span className="role-emoji">🎒</span>
@@ -754,6 +759,7 @@ function SignUp() {
             onComplete={handleStudentLinkComplete}
             onBack={handleStudentLinkBack}
             loading={nativeLoading === "role"}
+            directShow={false}
           />
         )}
 

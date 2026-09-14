@@ -43,6 +43,7 @@ function StudentLinkScreen({ onComplete, onBack, loading, directShow }) {
     }
   }, []);
 
+  // directShow=true면 버튼 없이 마운트 시 바로 QR 코드를 생성합니다.
   useEffect(() => {
     if (directShow) {
       handleQRCodeGenerate();
@@ -50,7 +51,7 @@ function StudentLinkScreen({ onComplete, onBack, loading, directShow }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // 마운트 시 1회만 실행
 
-  // code가 새로 생기면 모달을 열고 타이머를 리셋합니다.
+  // code가 새로 생기면 모달을 열고 타이머를 리셋합니다. (버튼 클릭이든 자동 생성이든 동일)
   useEffect(() => {
     if (linkInfo) {
       setShowCodeModal(true);
@@ -58,9 +59,9 @@ function StudentLinkScreen({ onComplete, onBack, loading, directShow }) {
     }
   }, [linkInfo]);
 
-  // 1초마다 카운트다운, 0이 되면 자동으로 닫습니다.
+  // linkInfo가 있을 때만 1초마다 카운트다운, 0이 되면 자동으로 닫습니다.
   useEffect(() => {
-    if (!showCodeModal) {
+    if (!showCodeModal || !linkInfo) {
       return;
     }
     const timer = setInterval(() => {
@@ -78,7 +79,7 @@ function StudentLinkScreen({ onComplete, onBack, loading, directShow }) {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [showCodeModal]);
+  }, [showCodeModal, linkInfo]);
 
   useEffect(() => {
     window.onNativeQRCodeAuthComplete = (payload) => {
@@ -106,22 +107,28 @@ function StudentLinkScreen({ onComplete, onBack, loading, directShow }) {
   }, [onComplete]);
 
   const handleCancel = useCallback(() => {
-    if(directShow) {
+    if (directShow) {
       onBack();
     }
     setShowCodeModal(false);
-
-  }, [onBack]);
+  }, [directShow, onBack]);
 
   // QR에 넣을 값: 유니버설 링크 URL 형태로 인코딩합니다.
   const qrValue = linkInfo
     ? `https://kidsfullcare.web.app/share?code=${encodeURIComponent(linkInfo.code)}&uid=${encodeURIComponent(linkInfo.uid)}&name=${encodeURIComponent(linkInfo.name)}`
     : "";
 
-  // 보여줄 게 없으면 렌더링 자체를 하지 않음 (Portal이어도 불필요한 빈 노드 방지)
-  if (!showCodeModal && authCompleteName === null) {
-    return null;
-  }
+  useEffect(() => {
+    console.info(
+      `StudentLinkScreen: directShow=${directShow}, showCodeModal=${showCodeModal}, authCompleteName=${authCompleteName}`
+    );
+  }, [directShow, showCodeModal, authCompleteName]);
+
+  // directShow=true일 때만 "보여줄 게 없으면 렌더 안 함"을 적용합니다.
+  // directShow=false일 때는 버튼이 항상 보여야 하므로 여기서 걸러내지 않습니다.
+  // if (directShow && !showCodeModal && authCompleteName === null) {
+  //   return null;
+  // }
 
   const content = (
     <div className="codeview-layout">
