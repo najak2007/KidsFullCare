@@ -124,27 +124,16 @@ function StudentLinkScreen({ onComplete, onBack, loading, directShow }) {
     );
   }, [directShow, showCodeModal, authCompleteName]);
 
-  // directShow=true일 때만 "보여줄 게 없으면 렌더 안 함"을 적용합니다.
-  // directShow=false일 때는 버튼이 항상 보여야 하므로 여기서 걸러내지 않습니다.
-  // if (directShow && !showCodeModal && authCompleteName === null) {
-  //   return null;
-  // }
+  // directShow 모드에서 아직 아무것도 보여줄 게 없으면(자동 생성 대기 중)
+  // 빈 레이아웃조차 렌더링하지 않습니다. directShow=false일 때는 버튼이
+  // 항상 카드 레이아웃 안에 보여야 하므로 이 조건에 걸리지 않습니다.
+  if (directShow && !showCodeModal && authCompleteName === null) {
+    return null;
+  }
 
-  const content = (
-    <div className="codeview-layout">
-      <div className="create-btn-layout">
-        {!directShow && (
-          <button
-            type="button"
-            className="qrcode-create-btn"
-            onClick={handleQRCodeGenerate}
-            disabled={qrloading}
-          >
-            {qrloading ? "생성 중..." : "QR Code 생성"}
-          </button>
-        )}
-      </div>
-
+  // 모달(오버레이) 내용만 따로 분리 — 이 부분만 document.body로 포탈됩니다.
+  const modalContent = (
+    <>
       {showCodeModal && linkInfo && (
         <div
           className="code-modal-overlay"
@@ -200,7 +189,7 @@ function StudentLinkScreen({ onComplete, onBack, loading, directShow }) {
             <p className="code-modal-qr-fallback">
               {linkCodeResult === "중복" ? "과 이미 인증 상태입니다." : "과 연결되었습니다"}
             </p>
-              
+
             { linkCodeResult === "중복" ? (
             <button
               type="button"
@@ -218,13 +207,31 @@ function StudentLinkScreen({ onComplete, onBack, loading, directShow }) {
             </button>
             )}
           </div>
-        
         </div>
       )}
-    </div>
+    </>
   );
 
-  return createPortal(content, document.body);
+  return (
+    <div className="codeview-layout">
+      {/* 버튼은 일반 DOM 흐름에 그대로 두어 부모 카드 레이아웃 안에서 렌더링됩니다. */}
+      <div className="create-btn-layout">
+        {!directShow && (
+          <button
+            type="button"
+            className="qrcode-create-btn"
+            onClick={handleQRCodeGenerate}
+            disabled={qrloading}
+          >
+            {qrloading ? "생성 중..." : "QR Code 생성"}
+          </button>
+        )}
+      </div>
+
+      {/* 모달(오버레이)만 body로 포탈하여 z-index/overflow 제약을 피합니다. */}
+      {createPortal(modalContent, document.body)}
+    </div>
+  );
 }
 
 export default StudentLinkScreen;
