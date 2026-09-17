@@ -70,11 +70,11 @@ function useFamilyImageListener(uid, onImageReceived) {
 /* ================================================================
  * 상단 아바타 줄: 본인 → family(연결된 학부모/학생들) → 추가 버튼
  * ================================================================ */
-function AvatarRow({ selfProfile, familyMembers, onAddFamily }) {
+function AvatarRow({ selfProfile, userMembers, onAddFamily }) {
   return (
     <div className="avatar-row">
       <AvatarCircle name={selfProfile?.name} image={selfProfile?.image} isSelf />
-      {familyMembers.map((member) => (
+      {userMembers.map((member) => (
         <AvatarFamilyCircle key={member.uid} uid={member.uid} name={member.name} image={member?.image} />
       ))}
       <button type="button" className="avatar-add-btn" onClick={() => onAddFamily(selfProfile?.role)} aria-label="가족 추가">
@@ -130,6 +130,8 @@ function AvatarCircle({ name, image, isSelf }) {
 function AvatarFamilyCircle({ uid, name, image }) {
     const [internalImage, setInternalImage] = useState(image || null);
 
+    console.info("AvatarFamilyCircle name: " + name + " uid :" + uid);
+
     // 부모가 나중에 image prop을 채워주는 경우(예: loggedIn payload에 이미 있었던 경우) 반영
     useEffect(() => {
       setInternalImage(image || null);
@@ -162,10 +164,10 @@ function AvatarFamilyCircle({ uid, name, image }) {
 /* ================================================================
  * 상단 바: 아바타 줄 + 알림 버튼
  * ================================================================ */
-function MainHeader({ selfProfile, familyMembers, onAddFamily, onNotificationClick, hasUnreadNotification }) {
+function MainHeader({ selfProfile, userMembers, onAddFamily, onNotificationClick, hasUnreadNotification }) {
   return (
     <div className="main-header">
-      <AvatarRow selfProfile={selfProfile} familyMembers={familyMembers} onAddFamily={onAddFamily} />
+      <AvatarRow selfProfile={selfProfile} userMembers={userMembers} onAddFamily={onAddFamily} />
       <button type="button" className="notification-btn" onClick={onNotificationClick} aria-label="알림">
         <BellIcon />
         {hasUnreadNotification && <span className="notification-dot" />}
@@ -301,7 +303,7 @@ function TabBar({ activeTab, onChange }) {
  * ================================================================ */
 function MainScreen({
   selfProfile,          // { name, image, role }
-  familyMembers = [],   // [{ uid, name, image }]
+  userMembers = [],   // [{ uid, name, image }]
   todos = [],           // [{ id, title, emoji }]
   hasUnreadNotification = false,
   onAddFamily,
@@ -309,14 +311,16 @@ function MainScreen({
   onSendMessageClick,
   onTodoClick,
   onNavigate,
+  onFamilyMemberAdded,
 }) {
   const [activeTab, setActiveTab] = useState("home");
-  const primaryFamilyMember = familyMembers[0] || null;
-  const primaryFamilyUid = familyMembers[0]?.uid;
-  const primaryFamilyName = familyMembers[0]?.name;
+  const primaryFamilyMember = userMembers[0] || null;
+  const primaryFamilyUid = userMembers[0]?.uid;
+  const primaryFamilyName = userMembers[0]?.name;
   const [authQRCodeModal, setAuthQRCodeModal] = useState(false);
   const currentRole = selfProfile?.role;
   const [schoolInfo, setSchoolInfo] = useState(null);
+
 
   useEffect(() => {
     window.onNativeSchoolInfo = (payload) => {
@@ -334,9 +338,10 @@ function MainScreen({
     setAuthQRCodeModal(true);
   }, []);
 
-  const handleLinkAuthComplete = useCallback(() => {
+  const handleLinkAuthComplete = useCallback((userInfo) => {
     setAuthQRCodeModal(false);
-  }, []);
+    onFamilyMemberAdded(userInfo);   // 부모(SignUp)에게 위임
+  }, [onFamilyMemberAdded]);
 
   const handleLinkAuthBack = useCallback(() => {
     setAuthQRCodeModal(false);
@@ -359,7 +364,7 @@ function MainScreen({
       <div className="main-screen-scroll">
         <MainHeader
           selfProfile={selfProfile}
-          familyMembers={familyMembers}
+          userMembers={userMembers}
           onAddFamily={handleAddFamilyForAuth}
           onNotificationClick={onNotificationClick}
           hasUnreadNotification={hasUnreadNotification}

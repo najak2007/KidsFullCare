@@ -192,7 +192,7 @@ function SignUp() {
   const [addUserUid, setAddUserUid] = useState(null);
   const [addUserName, setAddUserName] = useState(null);
   const [linkResult, setLinkResult] = useState(null);
-  const [familyMembers, setFamilyMembers] = useState(null);
+  const [familyMembers, setFamilyMembers] = useState([]);
   const [currentScreen, setCurrentScreen] = useState({ name: "main"});
 
   const navigateTo = (screenName, params = {}) => {
@@ -380,15 +380,17 @@ function SignUp() {
   }, []);
 
   const handleStudentLinkComplete = useCallback((studentInfo) => {
-    // studentInfo 예: { linkCode: "123456", grade: "3학년" } 등
-    // StudentLinkScreen이 실제로 넘겨주는 필드에 맞게 사용하시면 됩니다.
     setError("");
-    if (studentInfo?.nextStep == true) {
-      requestNativeSaveRole("student");
-    } else {
-      setNativeLoading("role");
-      requestNativeSaveRole("student", studentInfo);
-    }
+    handleFamilyMemberAdded(studentInfo);
+    requestNativeSaveRole("student");
+  }, []);
+
+  const handleFamilyMemberAdded = useCallback((userInfo) => {
+    setFamilyMembers((prev) =>{
+      const next = [...prev, userInfo];
+      console.info("handleStudentLinkComplete familyMembers (갱신 후)", JSON.stringify(next));
+      return next;
+    });
   }, []);
 
   const handleStudentLinkBack = useCallback(() => {
@@ -536,10 +538,11 @@ function SignUp() {
       { currentScreen.name === "main" && (
         <MainScreen 
           selfProfile={{name: name, image: profileImage, role: role}}
-          familyMembers= {familyMembers}
+          userMembers= {familyMembers}
           onAddFamily= {handleAddFamilyReq}
           onSendMessageClick= {handleSendMessage}
           onNavigate={navigateTo}
+          onFamilyMemberAdded={handleFamilyMemberAdded}
         /> 
       )}
 

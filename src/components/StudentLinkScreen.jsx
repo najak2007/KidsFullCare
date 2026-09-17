@@ -27,6 +27,7 @@ function StudentLinkScreen({ onComplete, onBack, loading, directShow }) {
   const [remainingSeconds, setRemainingSeconds] = useState(120); // 2분
   const [authCompleteName, setAuthCompleteName] = useState(null); // 연결된 학부모 이름
   const [linkCodeResult, setLinkCodeResult] = useState(null); // { code, uid, name } or null
+  const [addUserInfo, setAddUserInfo] = useState(null);
 
   const handleQRCodeGenerate = useCallback(async () => {
     setQrloading(true);
@@ -86,6 +87,10 @@ function StudentLinkScreen({ onComplete, onBack, loading, directShow }) {
       setShowCodeModal(false);
       setLinkCodeResult(payload?.result || "");
       setAuthCompleteName(payload?.name || "");
+      setAddUserInfo(payload);
+
+      console.info("onNativeQRCodeAuthComplete payload.name" + payload?.name);
+
     };
 
     return () => {
@@ -102,9 +107,9 @@ function StudentLinkScreen({ onComplete, onBack, loading, directShow }) {
   const handleLinkCodeResult = useCallback((linkResult) => {
     setAuthCompleteName(null);
     if (linkResult === "추가" || linkResult === "중복") {
-      onComplete({ nextStep: true });
+      onComplete(addUserInfo);
     }
-  }, [onComplete]);
+  }, [onComplete, addUserInfo]);
 
   const handleCancel = useCallback(() => {
     if (directShow) {
@@ -120,7 +125,7 @@ function StudentLinkScreen({ onComplete, onBack, loading, directShow }) {
 
   useEffect(() => {
     console.info(
-      `StudentLinkScreen: directShow=${directShow}, showCodeModal=${showCodeModal}, authCompleteName=${authCompleteName}`
+      `StudentLinkScreen: directShow=${directShow}, showCodeModal=${showCodeModal}, authCompleteName=${authCompleteName}, addUserInfo=${addUserInfo}, onComplete=${onComplete}`
     );
   }, [directShow, showCodeModal, authCompleteName]);
 
