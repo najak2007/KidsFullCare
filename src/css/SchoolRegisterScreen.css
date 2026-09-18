@@ -1,10 +1,13 @@
 /* SchoolRegisterScreen.css */
 
+/* 1) 화면을 정확히 뷰포트 높이로 고정 (min-height → height) */
 .school-register-screen {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh; /* 모바일 브라우저 주소창 등 동적 뷰포트 대응 */
   background: #f2f2f7;
+  overflow: hidden; /* 화면 자체는 스크롤 안 되게 하고, 내부 content에서 스크롤 처리 */
 }
 
 /* ---------- 상단 바 (뒤로가기) ---------- */
@@ -49,11 +52,15 @@
 }
 
 /* ---------- 본문 ---------- */
-
+/* 2) 본문을 flex 컨테이너로 변경 + 필요할 때만 내부 스크롤 */
 .school-register-content {
   flex: 1;
-  padding: 12px 20px 32px;
+  min-height: 0; /* flex 자식 안에서 flex:1 자식(지도)이 제대로 늘어나려면 필수 */
+  display: flex;
+  flex-direction: column;
+  padding: 12px 20px calc(20px + env(safe-area-inset-bottom, 0px));
   box-sizing: border-box;
+  overflow-y: auto; /* 검색 결과가 많을 때는 이 안에서만 스크롤 */
 }
 
 .school-register-guide {
@@ -264,10 +271,12 @@
 
 /* ---------- 등록 완료 버튼 ---------- */
 
+/* 4) 버튼은 flex-shrink 방지 + 위 여백만 살짝 조정 */
 .school-register-submit-btn {
   width: 100%;
   height: 50px;
-  margin-top: 28px;
+  margin-top: 16px;
+  flex-shrink: 0;
   border: none;
   border-radius: 14px;
   background: #4c8dff;
@@ -282,10 +291,12 @@
   cursor: default;
 }
 
+/* 3) 지도가 남는 공간을 모두 차지하도록 변경 (고정 height 제거) */
 .school-map-wrap {
   position: relative;
   width: 100%;
-  height: 200px;
+  flex: 1;
+  min-height: 150px; /* 너무 눌리지 않게 최소 높이 확보 */
   border-radius: 12px;
   overflow: hidden;
   margin: 12px 0;

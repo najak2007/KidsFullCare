@@ -86,6 +86,10 @@ service cloud.firestore {
                     && request.resource.data.studentUid == resource.data.studentUid
                     && request.resource.data.createdAt == resource.data.createdAt;
 
+      // 삭제는 본인만 처리되도록 구현
+      allow delete: if request.auth != null 
+                    && resource.data.studentUid == request.auth.uid; 
+
     }
 
     match /profile/{userId} {
