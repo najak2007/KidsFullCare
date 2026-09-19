@@ -127,7 +127,14 @@ function SchoolRegisterScreen({ onBack, onComplete }) {
       ORG_RDNMA: selectedSchool.ORG_RDNMA,
       ORG_RDNDA: selectedSchool.ORG_RDNDA,
       ATPT_OFCDC_SC_CODE: selectedSchool.ATPT_OFCDC_SC_CODE,
+      ATPT_OFCDC_SC_NM: selectedSchool.ATPT_OFCDC_SC_NM,
       SD_SCHUL_CODE: selectedSchool.SD_SCHUL_CODE,
+      SCHUL_KND_SC_NM: selectedSchool. SCHUL_KND_SC_NM,
+      LCTN_SC_NM: selectedSchool.LCTN_SC_NM,
+      JU_ORG_NM: selectedSchool.JU_ORG_NM,
+      HS_SC_NM: selectedSchool.HS_SC_NM,
+      FOND_YMD: selectedSchool.FOND_YMD,
+      FOAS_MEMRD: selectedSchool.FOAS_MEMRD,
       grade: selectedGrade,
     });
   }, [selectedSchool, selectedGrade]);
