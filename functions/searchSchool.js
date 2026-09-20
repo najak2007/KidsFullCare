@@ -56,17 +56,19 @@ exports.searchSchool = onCall(
 
    const results = rows.map((row) => ({
       id: `${row.ATPT_OFCDC_SC_CODE}-${row.SD_SCHUL_CODE}`,
-      SCHUL_NM: row.SCHUL_NM,                       // 학교명
-      ORG_RDNMA: row.ORG_RDNMA,                     // 도로주소
-      ORG_RDNDA: row.ORG_RDNDA,                     // 도로 상세주소
-      ATPT_OFCDC_SC_CODE: row.ATPT_OFCDC_SC_CODE,   // 시도교육청코드
-      SD_SCHUL_CODE: row.SD_SCHUL_CODE,             // 행정표준코드
-      SCHUL_KND_SC_NM: row.SCHUL_KND_SC_NM,         // 초등학교/중학교/고등학교 등
-      schoollevel: row.SCHUL_KND_SC_NM === "초등학교" ? "1" : "2",
-      SCHUL_KND_SC_NM: row.SCHUL_KND_SC_NM,         // 학교종류명
-      LCTN_SC_NM: row.LCTN_SC_NM,                   // 시도명
-      FOND_SC_NM: row.FOND_SC_NM,                   // 설립명
-      ORG_TELNO: row.ORG_TELNO,                           // 전화번호
+      SCHUL_NM: row.SCHUL_NM,
+      ORG_RDNMA: row.ORG_RDNMA,
+      ORG_RDNDA: row.ORG_RDNDA,
+      ATPT_OFCDC_SC_CODE: row.ATPT_OFCDC_SC_CODE,
+      ATPT_OFCDC_SC_NM: row.ATPT_OFCDC_SC_NM,
+      SD_SCHUL_CODE: row.SD_SCHUL_CODE,
+      SCHUL_KND_SC_NM: row. SCHUL_KND_SC_NM,
+      LCTN_SC_NM: row.LCTN_SC_NM,
+      JU_ORG_NM: row.JU_ORG_NM,
+      FOND_YMD: row.FOND_YMD,
+      FOND_SC_NM: row.FOND_SC_NM,
+      ORG_TELNO: row.ORG_TELNO,
+      FOAS_MEMRD: row.FOAS_MEMRD,                         // 전화번호
     }));
 
     return { results };

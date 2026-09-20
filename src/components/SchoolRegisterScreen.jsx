@@ -34,7 +34,7 @@ function requestNativeSaveSchoolRegister(schoolInfo) {
 // 학년 목록은 필요에 맞게 조정하세요 (초/중/고 구분이 필요하면 school.level 등으로 분기)
 const GRADE_OPTIONS = ["1학년", "2학년", "3학년", "4학년", "5학년", "6학년"];
 
-function SchoolRegisterScreen({ onBack, onComplete }) {
+function SchoolRegisterScreen({ onBack, userUid, role,onComplete }) {
   // "search" → 학교 이름 검색 / "gradeSelect" → 주소 확정 후 학년 선택
   const [step, setStep] = useState("search");
 
@@ -46,6 +46,7 @@ function SchoolRegisterScreen({ onBack, onComplete }) {
 
   const [selectedSchool, setSelectedSchool] = useState(null); // { name, address, id }
   const [selectedGrade, setSelectedGrade] = useState(null);
+  const [mapStatus, setMapStatus] = useState("loading"); // loading | ready | notfound | error
   const [saving, setSaving] = useState(false);
 
   const inputRef = useRef(null);
@@ -132,10 +133,13 @@ function SchoolRegisterScreen({ onBack, onComplete }) {
       SCHUL_KND_SC_NM: selectedSchool. SCHUL_KND_SC_NM,
       LCTN_SC_NM: selectedSchool.LCTN_SC_NM,
       JU_ORG_NM: selectedSchool.JU_ORG_NM,
-      HS_SC_NM: selectedSchool.HS_SC_NM,
       FOND_YMD: selectedSchool.FOND_YMD,
+      FOND_SC_NM: selectedSchool.FOND_SC_NM,
+      ORG_TELNO: selectedSchool.ORG_TELNO,
       FOAS_MEMRD: selectedSchool.FOAS_MEMRD,
-      grade: selectedGrade,
+      ROLE: role,
+      USER_UID: userUid,
+      GRADE: selectedGrade,
     });
   }, [selectedSchool, selectedGrade]);
 
@@ -148,6 +152,10 @@ function SchoolRegisterScreen({ onBack, onComplete }) {
     }
     onBack?.();
   }, [step, handleChangeSchool, onBack]);
+
+  const handleMapStatusChange = useCallback((newStatus) => {
+    setMapStatus(newStatus);
+  }, []);
 
   const getGradeNumber = (grade) => parseInt(grade, 10);
 
@@ -263,6 +271,7 @@ function SchoolRegisterScreen({ onBack, onComplete }) {
             <SchoolAppleMap 
               address={selectedSchool.ORG_RDNMA}
               schoolName={selectedSchool.SCHUL_NM}
+              handleMapStatus={handleMapStatusChange}
             />
 
             {error && <p className="school-register-error">{error}</p>}
@@ -271,9 +280,9 @@ function SchoolRegisterScreen({ onBack, onComplete }) {
               type="button"
               className="school-register-submit-btn"
               onClick={handleSubmit}
-              disabled={!selectedGrade || saving}
+              disabled={!selectedGrade || saving || mapStatus !== "ready"}
             >
-              {saving ? "등록 중..." : "등록 완료"}
+              {saving && mapStatus === "ready" ? "등록 중..." : "등록 완료"}
             </button>
           </>
         )}

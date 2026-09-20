@@ -39,7 +39,7 @@ function initMapKitOnce() {
   window.mapkit._isInitialized = true;
 }
 
-function SchoolAppleMap({ address, schoolName }) {
+function SchoolAppleMap({ address, schoolName, handleMapStatus }) {
   const mapDivRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const [status, setStatus] = useState("loading"); // loading | ready | notfound | error
@@ -70,6 +70,7 @@ function SchoolAppleMap({ address, schoolName }) {
           if (cancelled) return;
           if (error || !data?.results?.length) {
             setStatus("notfound");
+            handleMapStatus?.("notfound");
             return;
           }
 
@@ -89,10 +90,14 @@ function SchoolAppleMap({ address, schoolName }) {
           map.addAnnotation(annotation);
 
           setStatus("ready");
+          handleMapStatus?.("ready");
         });
       } catch (err) {
         console.error("Apple Map 표시 실패:", err);
-        if (!cancelled) setStatus("error");
+        if (!cancelled) {
+          setStatus("error");
+          handleMapStatus?.("error");
+        }
       }
     }
 

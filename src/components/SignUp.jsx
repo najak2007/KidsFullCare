@@ -190,6 +190,7 @@ function SignUp() {
   const [provider, setProvider] = useState(null); // "apple" | "google" | "email" | null
   const [profileImage, setProfileImage] = useState(null);   // profile image에 대한 base64
   const [addUserUid, setAddUserUid] = useState(null);
+  const [userUid, setUserUid] = useState(null);
   const [addUserName, setAddUserName] = useState(null);
   const [linkResult, setLinkResult] = useState(null);
   const [familyMembers, setFamilyMembers] = useState([]);
@@ -251,6 +252,9 @@ function SignUp() {
         }
         if (payload.familyMembers) {
           setFamilyMembers(payload.familyMembers);
+        }
+        if (payload.userUid) {
+          setUserUid(payload.userUid);
         }
       }
       if (payload.status === "loggedOut") {
@@ -547,7 +551,11 @@ function SignUp() {
       )}
 
       { currentScreen.name === "schoolRegister" && (
-        <SchoolRegisterScreen onBack={goBack} />
+        <SchoolRegisterScreen 
+          onBack={goBack} 
+          userUid={userUid}
+          role={role}
+        />
       )}
 
       { linkResult !== null && (
