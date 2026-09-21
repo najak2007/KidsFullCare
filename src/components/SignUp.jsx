@@ -327,6 +327,10 @@ function SignUp() {
       setLinkResult(payload.linkResult);
       setAddUserUid(payload.addUserUid)
       setAddUserName(payload.addUserName);
+
+      if (payload.linkResult ==="추가") {
+        handleFamilyMemberAdded({"uid": payload.addUserUid, "name": payload.addUserName});
+      }
     };
 
     notifyNativeReady();

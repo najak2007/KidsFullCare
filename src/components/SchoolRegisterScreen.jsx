@@ -124,22 +124,22 @@ function SchoolRegisterScreen({ onBack, userUid, role,onComplete }) {
     setError("");
     setSaving(true);
     requestNativeSaveSchoolRegister({
-      SCHUL_NM: selectedSchool.SCHUL_NM,
-      ORG_RDNMA: selectedSchool.ORG_RDNMA,
-      ORG_RDNDA: selectedSchool.ORG_RDNDA,
-      ATPT_OFCDC_SC_CODE: selectedSchool.ATPT_OFCDC_SC_CODE,
-      ATPT_OFCDC_SC_NM: selectedSchool.ATPT_OFCDC_SC_NM,
-      SD_SCHUL_CODE: selectedSchool.SD_SCHUL_CODE,
-      SCHUL_KND_SC_NM: selectedSchool. SCHUL_KND_SC_NM,
-      LCTN_SC_NM: selectedSchool.LCTN_SC_NM,
-      JU_ORG_NM: selectedSchool.JU_ORG_NM,
-      FOND_YMD: selectedSchool.FOND_YMD,
-      FOND_SC_NM: selectedSchool.FOND_SC_NM,
-      ORG_TELNO: selectedSchool.ORG_TELNO,
-      FOAS_MEMRD: selectedSchool.FOAS_MEMRD,
-      ROLE: role,
-      USER_UID: userUid,
-      GRADE: selectedGrade,
+      SCHUL_NM: selectedSchool.SCHUL_NM === null ? "" : selectedSchool.SCHUL_NM ,
+      ORG_RDNMA: selectedSchool.ORG_RDNMA === null ? "" : selectedSchool.ORG_RDNMA,
+      ORG_RDNDA: selectedSchool.ORG_RDNDA === null ? "" : selectedSchool.ORG_RDNDA,
+      ATPT_OFCDC_SC_CODE: selectedSchool.ATPT_OFCDC_SC_CODE === null ? "" : selectedSchool.ATPT_OFCDC_SC_CODE,
+      ATPT_OFCDC_SC_NM: selectedSchool.ATPT_OFCDC_SC_NM === null ? "" : selectedSchool.ATPT_OFCDC_SC_NM,
+      SD_SCHUL_CODE: selectedSchool.SD_SCHUL_CODE === null ? "" : selectedSchool.SD_SCHUL_CODE,
+      SCHUL_KND_SC_NM: selectedSchool. SCHUL_KND_SC_NM === null ? "" : selectedSchool. SCHUL_KND_SC_NM,
+      LCTN_SC_NM: selectedSchool.LCTN_SC_NM === null ? "" : selectedSchool.LCTN_SC_NM,
+      JU_ORG_NM: selectedSchool.JU_ORG_NM === null ? "" : selectedSchool.JU_ORG_NM,
+      FOND_YMD: selectedSchool.FOND_YMD === null ? "" : selectedSchool.FOND_YMD,
+      FOND_SC_NM: selectedSchool.FOND_SC_NM === null ? "" : selectedSchool.FOND_SC_NM,
+      ORG_TELNO: selectedSchool.ORG_TELNO === null ? "" : selectedSchool.ORG_TELNO,
+      FOAS_MEMRD: selectedSchool.FOAS_MEMRD === null ? "" : selectedSchool.FOAS_MEMRD,
+      ROLE: role === null ? "" : role,
+      USER_UID: userUid === null ? "" : userUid,
+      GRADE: selectedGrade === null ? "" : selectedGrade,
     });
   }, [selectedSchool, selectedGrade]);
 
