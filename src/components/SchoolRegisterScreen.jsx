@@ -22,10 +22,10 @@ const searchSchoolFn = httpsCallable(functions, "searchSchool");
 
 function requestNativeSaveSchoolRegister(schoolInfo) {
   // schoolInfo: { name, address, grade }
-  if (window.webkit?.messageHandlers?.schoolRegisterSave) {
-    window.webkit.messageHandlers.schoolRegisterSave.postMessage(schoolInfo);
-  } else if (window.AndroidBridge?.schoolRegisterSave) {
-    window.AndroidBridge.schoolRegisterSave(JSON.stringify(schoolInfo));
+  if (window.webkit?.messageHandlers?.studentMenuRegisterSave) {
+    window.webkit.messageHandlers.studentMenuRegisterSave.postMessage(schoolInfo);
+  } else if (window.AndroidBridge?.studentMenuRegisterSave) {
+    window.AndroidBridge.studentMenuRegisterSave(JSON.stringify(schoolInfo));
   } else {
     console.warn("Native 학교 등록 저장 브릿지를 찾을 수 없습니다.");
   }
@@ -34,7 +34,7 @@ function requestNativeSaveSchoolRegister(schoolInfo) {
 // 학년 목록은 필요에 맞게 조정하세요 (초/중/고 구분이 필요하면 school.level 등으로 분기)
 const GRADE_OPTIONS = ["1학년", "2학년", "3학년", "4학년", "5학년", "6학년"];
 
-function SchoolRegisterScreen({ onBack, userUid, role,onComplete }) {
+function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey }) {
   // "search" → 학교 이름 검색 / "gradeSelect" → 주소 확정 후 학년 선택
   const [step, setStep] = useState("search");
 
@@ -55,6 +55,9 @@ function SchoolRegisterScreen({ onBack, userUid, role,onComplete }) {
     // 저장 완료/실패는 여전히 네이티브 콜백으로 받습니다.
     window.onNativeSchoolRegisterComplete = () => {
       setSaving(false);
+
+      console.info("onNaativeSchoolRegisterComplete selectedSchool" + selectedSchool + " grade: " + selectedGrade);
+
       onComplete?.({ school: selectedSchool, grade: selectedGrade });
     };
 
@@ -124,6 +127,7 @@ function SchoolRegisterScreen({ onBack, userUid, role,onComplete }) {
     setError("");
     setSaving(true);
     requestNativeSaveSchoolRegister({
+      KEY: screenKey === null ? "school" : screenKey,
       SCHUL_NM: selectedSchool.SCHUL_NM === null ? "" : selectedSchool.SCHUL_NM ,
       ORG_RDNMA: selectedSchool.ORG_RDNMA === null ? "" : selectedSchool.ORG_RDNMA,
       ORG_RDNDA: selectedSchool.ORG_RDNDA === null ? "" : selectedSchool.ORG_RDNDA,
@@ -282,7 +286,7 @@ function SchoolRegisterScreen({ onBack, userUid, role,onComplete }) {
               onClick={handleSubmit}
               disabled={!selectedGrade || saving || mapStatus !== "ready"}
             >
-              {saving && mapStatus === "ready" ? "등록 중..." : "등록 완료"}
+              {saving ? "등록 중..." : "등록 완료"}
             </button>
           </>
         )}

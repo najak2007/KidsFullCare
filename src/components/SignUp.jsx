@@ -195,12 +195,20 @@ function SignUp() {
   const [linkResult, setLinkResult] = useState(null);
   const [familyMembers, setFamilyMembers] = useState([]);
   const [currentScreen, setCurrentScreen] = useState({ name: "main"});
+  const [registerSchool, setRegisterSchool] = useState(null);
 
   const navigateTo = (screenName, params = {}) => {
     setCurrentScreen({ name: screenName, ...params });
   };
 
   const goBack = () => navigateTo("main");
+
+  const registerComplete = ({school, grade}) => {
+    if (school) {
+      setRegisterSchool(school);
+    }
+    navigateTo("main");
+  }
 
   // useEffect(등록은 최초 1회) 안에서도 최신 manualMode 값을 읽기 위한 ref
   const manualModeRef = useRef(manualMode);
@@ -554,11 +562,13 @@ function SignUp() {
         /> 
       )}
 
-      { currentScreen.name === "schoolRegister" && (
+      { currentScreen.name === "school" && (
         <SchoolRegisterScreen 
           onBack={goBack} 
           userUid={userUid}
           role={role}
+          onComplete={registerComplete}
+          screenKey= {currentScreen.name}
         />
       )}
 

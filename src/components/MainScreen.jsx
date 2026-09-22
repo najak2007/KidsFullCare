@@ -24,16 +24,6 @@ function requestNativeFamilyMemberImage(uid) {
     }
 }
 
-function requestNativeSchoolInfo() {
-  if (window.webkit?.messageHandlers?.schoolInfoReq) {
-    window.webkit.messageHandlers.schoolInfoReq.postMessage(null);
-  } else if(window.AndroidBridge?.schoolInfoReq) {
-    window.AndroidBridge.schoolInfoReq();
-  } else {
-    console.warn("Native 학교 정보 조회 브릿지를 찾을 수 없습니다.");
-  }
-}
-
 // 이 파일이 여러 번 로드되어도 (HMR 등) 중복 등록되지 않도록 가드합니다.
 const familyImageListeners = new Set();
 
@@ -351,14 +341,6 @@ function MainScreen({
     onSendMessageClick(primaryFamilyMember?.uid, primaryFamilyMember?.name);
   }, []);
 
-  const handleSchoolInfoRequest = useCallback (() => {
-    requestNativeSchoolInfo();
-  }, []);
-
-  if (currentRole === "student") {
-    handleSchoolInfoRequest();
-  }
-
   return (
     <div className="main-screen">
       <div className="main-screen-scroll">
@@ -387,17 +369,16 @@ function MainScreen({
             onSelect={(menu) => {
               switch(menu.key) {
                 case "school":
-                  onNavigate(menu.command);
+                  onNavigate(menu.key);
                   break;
                 case "academy":
-                  onNavigate(menu.command);
+                  onNavigate(menu.key);
                   break;
                 case "parentLink":
-                  onNavigate(menu.command);
+                  onNavigate(menu.key);
                   break;
                 default:
                   console.warn("아직 연결되지 않은 메뉴: ", menu.key);
-                
               }
             }}
           />
