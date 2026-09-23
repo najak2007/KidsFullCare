@@ -128,7 +128,7 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey }) 
     setSaving(true);
     requestNativeSaveSchoolRegister({
       KEY: screenKey === null ? "school" : screenKey,
-      SCHUL_NM: selectedSchool.SCHUL_NM === null ? "" : selectedSchool.SCHUL_NM ,
+      SCHUL_NM: selectedSchool.SCHUL_NM === null ? "" : selectedSchool.SCHUL_NM,
       ORG_RDNMA: selectedSchool.ORG_RDNMA === null ? "" : selectedSchool.ORG_RDNMA,
       ORG_RDNDA: selectedSchool.ORG_RDNDA === null ? "" : selectedSchool.ORG_RDNDA,
       ATPT_OFCDC_SC_CODE: selectedSchool.ATPT_OFCDC_SC_CODE === null ? "" : selectedSchool.ATPT_OFCDC_SC_CODE,
@@ -144,6 +144,8 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey }) 
       ROLE: role === null ? "" : role,
       USER_UID: userUid === null ? "" : userUid,
       GRADE: selectedGrade === null ? "" : selectedGrade,
+      label: selectedSchool.SCHUL_NM === null ? "" : selectedSchool.SCHUL_NM,
+      register: true
     });
   }, [selectedSchool, selectedGrade]);
 

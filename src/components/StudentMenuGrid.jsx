@@ -9,44 +9,50 @@ const DEFAULT_STUDENT_MENUS = [
     label: "학교 등록",
     icon: "🏫",
     color: "#4C8DFF",
+    register: false,
   },
   {
     key: "academy",
     label: "학원 등록",
     icon: "📚",
     color: "#FF9F40",
+    register: false,
   },
   {
     key: "class",
     label: "수업 등록",
     icon: "📝",
     color: "#34C77B",
+    register: false,
   },
   {
     key: "timetable",
     label: "시간표",
     icon: "🗓️",
     color: "#A566FF",
+    register: false,
   },
   {
     key: "notice",
     label: "알림장",
     icon: "📢",
     color: "#FF5A6E",
+    register: false,
   },
   {
     key: "parentLink",
     label: "부모님 연결",
     icon: "🔗",
     color: "#20C4C8",
+    register: false,
   },
 ];
 
-function requestNativeMenuItem(key) {
+function requestNativeMenuItem(menu) {
   if (window.webkit?.messageHandlers?.menuItemReq) {
-    window.webkit.messageHandlers.menuItemReq(key);
+    window.webkit.messageHandlers.menuItemReq.postMessage(menu);
   } else if (window.AndroidBridge?.menuItemReq) {
-    window.AndroidBridge.menuItemReq(key);
+    window.AndroidBridge.menuItemReq(menu);
   } else {
     console.warn("Native 메뉴 읽어들이는 브릿지를 찾을 수 없습니다.");
   }
@@ -58,6 +64,9 @@ if (typeof window !== "undefined" && !window.__menuItemDispatcherInstalled) {
   window.__menuItemDispatcherInstalled = true;
 
   window.onNativeMenuItem = (payload) => {
+
+    console.warn("window.onNativeMenuItem payload.label = " + payload?.label + "  payload.register = " + payload?.register);
+
     menuItemListeners.forEach((listener) => listener(payload));
   };
 }
@@ -65,9 +74,12 @@ if (typeof window !== "undefined" && !window.__menuItemDispatcherInstalled) {
 function useMenuListener(key, onMenuReceived) {
   useEffect(() => {
     const listener = (payload) => {
+
+      console.warn("window.useMenuListener payload.label = " + payload?.label + "  key = " + key);
+
       if (payload?.key !== key) return;
-      if (payload?.menu) {
-        onMenuReceived(payload.menu);
+      if (payload) {
+        onMenuReceived(payload);
       }
     };
     menuItemListeners.add(listener);
@@ -77,8 +89,11 @@ function useMenuListener(key, onMenuReceived) {
   }, [key, onMenuReceived])
 }
 
-function MenuGridDisplay({key, menu, onSelect}) {
+function MenuGridDisplay({menu, onSelect}) {
   const [menuData, setMenuData] = useState(menu || null);
+  const [key, setKey] = useState(menu.key || null);
+
+  console.info("MenuGridDisplay key = " + key);
 
   useEffect(() => {
     setMenuData(menu || null);
@@ -91,8 +106,8 @@ function MenuGridDisplay({key, menu, onSelect}) {
   useMenuListener(key, handleMenuReceived);
 
   useEffect(() => {
-    if (menuData || !key) return;
-    requestNativeMenuItem(key);
+    if (menuData.register || !key) return;
+    requestNativeMenuItem(menuData);
   }, [key])
 
 
@@ -121,11 +136,13 @@ function MenuGridDisplay({key, menu, onSelect}) {
  * @param {Array}  [props.menus]     - 표시할 메뉴 목록 (기본값: DEFAULT_STUDENT_MENUS)
  * @param {Function} props.onSelect  - 메뉴 클릭 시 호출, 클릭된 menu 객체를 인자로 받음
  */
-function StudentMenuGrid({ menus = DEFAULT_STUDENT_MENUS, onSelect }) {
+function StudentMenuGrid({ onSelect }) {
+  const [menus, setMenus] = useState(DEFAULT_STUDENT_MENUS)
+
   return (
     <div className="student-menu-grid">
       {menus.map((menu) => (
-        MenuGridDisplay({ menu.key, menu,  onSelect})
+        MenuGridDisplay({ menu,  onSelect})
       ))}
     </div>
   );
