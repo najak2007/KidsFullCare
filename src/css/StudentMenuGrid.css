@@ -66,6 +66,39 @@
   }
 }
 
+/* 미등록 상태: 흐릿하고 선명하지 않은 느낌 */
+.student-menu-item.is-unregistered .student-menu-icon {
+  filter: grayscale(60%) blur(0.5px);
+  opacity: 0.55;
+}
+
+.student-menu-item.is-unregistered .student-menu-label {
+/*  opacity: 0.55; */
+  color: #999;
+}
+
+/* 클릭은 가능하되 시각적으로 비활성 느낌을 주고 싶다면 */
+.student-menu-item.is-unregistered {
+  cursor: pointer; /* 등록 유도용이라면 클릭 유지 */
+}
+
+/* 아이콘 배경색 자체도 톤다운하고 싶다면 */
+.student-menu-item.is-unregistered .student-menu-icon {
+  filter: grayscale(60%) blur(0.5px) brightness(1.1);
+}
+
+/* 살짝의 애니메이션으로 "아직 활성화되지 않음"을 표현 (선택) */
+/*
+.student-menu-item.is-unregistered .student-menu-icon {
+  animation: unregistered-pulse 2s ease-in-out infinite;
+}
+*/
+
+@keyframes unregistered-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.65; }
+}
+
 /* ------------------------------------------------------------
  * 다크모드
  * ------------------------------------------------------------ */

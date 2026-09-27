@@ -74,9 +74,6 @@ if (typeof window !== "undefined" && !window.__menuItemDispatcherInstalled) {
 function useMenuListener(key, onMenuReceived) {
   useEffect(() => {
     const listener = (payload) => {
-
-      console.warn("window.useMenuListener payload.label = " + payload?.label + "  key = " + key);
-
       if (payload?.key !== key) return;
       if (payload) {
         onMenuReceived(payload);
@@ -93,7 +90,7 @@ function MenuGridDisplay({menu, onSelect}) {
   const [menuData, setMenuData] = useState(menu || null);
   const [key, setKey] = useState(menu.key || null);
 
-  console.info("MenuGridDisplay key = " + key);
+  console.info("MenuGridDisplay key = " + key + " menuData.label = " + menuData?.label + "  menuData.register = " + menuData?.register);
 
   useEffect(() => {
     setMenuData(menu || null);
@@ -113,20 +110,19 @@ function MenuGridDisplay({menu, onSelect}) {
 
   return (
     <button
-      key={menu.key}
+      key={menuData.key}
       type="button"
-      className="student-menu-item"
-      onClick={() => onSelect?.(menu)}
+      className={`student-menu-item${menuData.register ? "" : " is-unregistered"}`}
+      onClick={() => onSelect?.(menuData)}
+    >
+    <span
+      className="student-menu-icon"
+      style={{ backgroundColor: menuData.color }}
       >
-      <span
-        className="student-menu-icon"
-        style={{ backgroundColor: menu.color }}
-        >
-        {menu.icon}
-      </span>
-      <span className="student-menu-label">{menu.label}</span>
+      {menuData.icon}
+    </span>
+    <span className="student-menu-label">{menuData.label}</span>
     </button>
-
   );
 }
 
@@ -142,7 +138,7 @@ function StudentMenuGrid({ onSelect }) {
   return (
     <div className="student-menu-grid">
       {menus.map((menu) => (
-        MenuGridDisplay({ menu,  onSelect})
+        <MenuGridDisplay key={menu.key} menu={menu} onSelect={onSelect} />
       ))}
     </div>
   );

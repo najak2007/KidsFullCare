@@ -11,11 +11,11 @@ service cloud.firestore {
     function isLinkedParent(studentUid) {
       return request.auth != null &&
               request.auth.uid in
-                get(/databases/$(database)/documents/users/$(studentUid)).data.get("familyUids", []);
+                get(/databases/$(database)/documents/users/$(studentUid)).data.get("family", []);
     }
 
-    function touchesOnlySchoolInfo() {
-      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(["schoolInfo"]);
+    function touchesOnlySchool() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(["school"]);
     }
 
     match /users/{userId} {
@@ -41,7 +41,7 @@ service cloud.firestore {
                  ||
                  (
                    isLinkedParent(userId)
-                   && touchesOnlySchoolInfo()
+                   && touchesOnlySchool()
                  )
                );
 
@@ -70,6 +70,12 @@ service cloud.firestore {
                   );
       // 본인 문서만 삭제 가능 (회원 탈퇴용)
       allow delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    match /meta/{docId} {
+      allow read: if request.auth != null &&
+                    (request.auth.uid == userId || isLinkedParent(userId));
+      allow write: if request.auth != null && request.auth.uid == userId;
     }
 
     match /linkCodes/{code} {
