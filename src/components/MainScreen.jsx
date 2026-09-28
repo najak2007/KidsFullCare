@@ -309,14 +309,12 @@ function MainScreen({
   const primaryFamilyName = userMembers[0]?.name;
   const [authQRCodeModal, setAuthQRCodeModal] = useState(false);
   const currentRole = selfProfile?.role;
+  const [studentLoading, setStudentLoading] = useState(false)
   const [schoolInfo, setSchoolInfo] = useState(null);
 
 
   useEffect(() => {
-    window.onNativeSchoolInfo = (payload) => {
-      if(!payload?.SCHUL_NM && !payload?.ORG_RDNMA && !payload?.GRADE) {
-        setSchoolInfo({name: payload.SCHUL_NM, address: payload.ORG_RDNMA, grade: payload.GRADE });
-      }
+    window.onNativeStudentMenuInfo = (payload) => {
     };
   }, []);
 
@@ -364,7 +362,7 @@ function MainScreen({
 
         <TodoStack todos={todos} onTodoClick={onTodoClick} />
 
-        { currentRole === "student" && (
+        { currentRole === "student" && studentLoading === true && (
           <StudentMenuGrid
             onSelect={(menu) => {
               switch(menu.key) {
