@@ -1,0 +1,47 @@
+/* src/css/AcademyRegisterScreen.css
+ * SchoolRegisterScreen.css 위에 얹는 학원 등록 화면 추가 스타일.
+ * 색상/둥글기 값은 기존 school-search-input 스타일에 맞춰 조정하세요.
+ */
+
+.academy-search-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.academy-search-row {
+  display: flex;
+  gap: 8px;
+}
+
+.academy-search-row .school-search-input {
+  flex: 1;
+  min-width: 0;
+}
+
+/* 시도교육청 풀다운 (네이티브 select → iOS/Android WebView에서 기본 피커로 열림) */
+.academy-edu-select {
+  width: 100%;
+  height: 48px;
+  padding: 0 40px 0 14px;
+  font-size: 16px; /* 16px 미만이면 iOS에서 포커스 시 화면이 확대됩니다 */
+  color: inherit;
+  background-color: #fff;
+  border: 1px solid #d9d9d9;
+  border-radius: 10px;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23666' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+}
+
+.academy-edu-select:focus-visible {
+  outline: 2px solid #ff9500;
+  outline-offset: 1px;
+}
+
+.academy-selected-meta {
+  font-size: 13px;
+  color: #8a8a8a;
+}

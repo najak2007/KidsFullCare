@@ -24,6 +24,16 @@ function requestNativeFamilyMemberImage(uid) {
     }
 }
 
+function requestNativeMenuHandler() {
+    if (window.webkit?.messageHandlers?.fetchMainGridMenu) {
+        window.webkit.messageHandlers.fetchMainGridMenu.postMessage(null);
+    } else if (window.AndroidBridge?.fetchMainGridMenu) {
+        window.AndroidBridge.fetchMainGridMenu();
+    } else {
+        console.warn("Native 메뉴 요청하는 브릿지를 찾을 수 없습니다.");
+    }
+}
+
 // 이 파일이 여러 번 로드되어도 (HMR 등) 중복 등록되지 않도록 가드합니다.
 const familyImageListeners = new Set();
 
@@ -309,13 +319,15 @@ function MainScreen({
   const primaryFamilyName = userMembers[0]?.name;
   const [authQRCodeModal, setAuthQRCodeModal] = useState(false);
   const currentRole = selfProfile?.role;
-  const [studentLoading, setStudentLoading] = useState(false)
-  const [schoolInfo, setSchoolInfo] = useState(null);
-
+  const [studentMenus, setStudentMenus] = useState(null);
 
   useEffect(() => {
-    window.onNativeStudentMenuInfo = (payload) => {
+    window.onNativeStudentMenuInfo = (menus) => {
+      setStudentMenus(menus);
     };
+
+    console.info("MainScreen 기본 메뉴 항목 읽기 시도");
+    requestNativeMenuHandler();
   }, []);
 
   const handleAddFamilyForAuth = useCallback((role) => {
@@ -362,8 +374,9 @@ function MainScreen({
 
         <TodoStack todos={todos} onTodoClick={onTodoClick} />
 
-        { currentRole === "student" && studentLoading === true && (
+        { currentRole === "student" && studentMenus !== null && (
           <StudentMenuGrid
+            studentMenus= {studentMenus}
             onSelect={(menu) => {
               switch(menu.key) {
                 case "school":

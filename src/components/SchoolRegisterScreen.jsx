@@ -53,22 +53,20 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey }) 
 
   useEffect(() => {
     // 저장 완료/실패는 여전히 네이티브 콜백으로 받습니다.
-    window.onNativeSchoolRegisterComplete = () => {
+    window.onNativeschoolRegisterComplete = () => {
       setSaving(false);
 
-      console.info("onNaativeSchoolRegisterComplete selectedSchool" + selectedSchool + " grade: " + selectedGrade);
-
-      onComplete?.({ school: selectedSchool, grade: selectedGrade });
+      onComplete?.({ screenKey: screenKey});
     };
 
-    window.onNativeSchoolRegisterError = (payload) => {
+    window.onNativeschoolRegisterError = (payload) => {
       setSaving(false);
       setError(payload?.message || "학교 등록 중 오류가 발생했습니다.");
     };
 
     return () => {
-      delete window.onNativeSchoolRegisterComplete;
-      delete window.onNativeSchoolRegisterError;
+      delete window.onNativeschoolRegisterComplete;
+      delete window.onNativeschoolRegisterError;
     };
     // selectedSchool/selectedGrade는 콜백 안에서 최신값을 참조해야 하므로 의존성에 포함
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -132,8 +132,8 @@ function MenuGridDisplay({menu, onSelect}) {
  * @param {Array}  [props.menus]     - 표시할 메뉴 목록 (기본값: DEFAULT_STUDENT_MENUS)
  * @param {Function} props.onSelect  - 메뉴 클릭 시 호출, 클릭된 menu 객체를 인자로 받음
  */
-function StudentMenuGrid({ onSelect }) {
-  const [menus, setMenus] = useState(DEFAULT_STUDENT_MENUS)
+function StudentMenuGrid({ studentMenus, onSelect }) {
+  const [menus, setMenus] = useState(studentMenus || DEFAULT_STUDENT_MENUS)
 
   return (
     <div className="student-menu-grid">

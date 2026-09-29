@@ -21,6 +21,7 @@ import MainScreen from "./MainScreen";
 import AddLinkButton from "./AddLinkButton";
 
 import SchoolRegisterScreen from "./SchoolRegisterScreen";
+import AcademyRegisterScreen from "./AcademyRegisterScreen";
 
 
 /* ------------------------------------------------------------
@@ -201,12 +202,14 @@ function SignUp() {
     setCurrentScreen({ name: screenName, ...params });
   };
 
-  const goBack = () => navigateTo("main");
+  const goBack = () => {
+    navigateTo("main");
+  }
+// onComplete?.({ screenKey: screenKey, studentInfo: selectedSchool, grade: selectedGrade });
 
-  const registerComplete = ({school, grade}) => {
-    if (school) {
-      setRegisterSchool(school);
-    }
+  const registerComplete = ({screenKey}) => {
+    console.info("SignUp registerComplete : ", screenKey);
+
     navigateTo("main");
   }
 
@@ -569,6 +572,16 @@ function SignUp() {
           role={role}
           onComplete={registerComplete}
           screenKey= {currentScreen.name}
+        />
+      )}
+
+      { currentScreen.name === "academy" && (
+        <AcademyRegisterScreen
+          onBack={goBack}
+          userUid={userUid}
+          role={role}
+          onComplete={registerComplete}
+          screenKey={currentScreen.name}
         />
       )}
 

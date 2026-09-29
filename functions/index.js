@@ -64,5 +64,6 @@ exports.cleanupExpiredLinkCodes = onSchedule(
 );
 
 exports.searchSchool = require("./searchSchool").searchSchool;
+exports.searchAcademy = require("./searchAcademy").searchAcademy;
 exports.getMapKitToken = require("./mapkitToken").getMapKitToken;
 exports.mealServiceDietInfo = require("./mealServiceDietInfo").mealServiceDietInfo;
