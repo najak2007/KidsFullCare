@@ -318,6 +318,28 @@
   margin: 0;
 }
 
+.grade-grid--selected {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.grade-grid--selected .grade-item {
+  flex: 0 0 auto;
+  min-width: 96px;
+}
+
+.class-select {
+  flex: 1;
+  height: 44px;              /* .grade-item 높이에 맞춰 조정 */
+  padding: 0 12px;
+  border: 1px solid #d0d0d0;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 16px;           /* iOS WebView에서 16px 미만이면 포커스 시 확대됨 */
+  color: inherit;
+}
+
 /* ------------------------------------------------------------
  * 다크모드
  * ------------------------------------------------------------ */

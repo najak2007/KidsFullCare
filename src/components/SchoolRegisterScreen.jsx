@@ -33,6 +33,7 @@ function requestNativeSaveSchoolRegister(schoolInfo) {
 
 // 학년 목록은 필요에 맞게 조정하세요 (초/중/고 구분이 필요하면 school.level 등으로 분기)
 const GRADE_OPTIONS = ["1학년", "2학년", "3학년", "4학년", "5학년", "6학년"];
+const CLASS_OPTIONS = Array.from({ length: 15}, (_, i) => `${i + 1}반`);
 
 function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey }) {
   // "search" → 학교 이름 검색 / "gradeSelect" → 주소 확정 후 학년 선택
@@ -46,6 +47,7 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey }) 
 
   const [selectedSchool, setSelectedSchool] = useState(null); // { name, address, id }
   const [selectedGrade, setSelectedGrade] = useState(null);
+  const [selectedClass, setSelectedClass] = useState("");
   const [mapStatus, setMapStatus] = useState("loading"); // loading | ready | notfound | error
   const [saving, setSaving] = useState(false);
 
@@ -107,6 +109,7 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey }) 
   const handleSelectSchool = useCallback((school) => {
     setSelectedSchool(school);
     setSelectedGrade(null);
+    setSelectedClass("");
     setError("");
     setStep("gradeSelect");
   }, []);
@@ -114,14 +117,21 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey }) 
   const handleChangeSchool = useCallback(() => {
     setStep("search");
     setSelectedGrade(null);
+    setSelectedClass("");
   }, []);
 
   const handleSelectGrade = useCallback((grade) => {
     setSelectedGrade(grade);
+    setSelectedClass("");
+  }, []);
+
+  const handleResetGrade = useCallback(() => {
+    setSelectedGrade(null);
+    setSelectedClass("");
   }, []);
 
   const handleSubmit = useCallback(() => {
-    if (!selectedSchool || !selectedGrade) return;
+    if (!selectedSchool || !selectedGrade || !selectedClass) return;
     setError("");
     setSaving(true);
     requestNativeSaveSchoolRegister({
@@ -139,13 +149,12 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey }) 
       FOND_SC_NM: selectedSchool.FOND_SC_NM === null ? "" : selectedSchool.FOND_SC_NM,
       ORG_TELNO: selectedSchool.ORG_TELNO === null ? "" : selectedSchool.ORG_TELNO,
       FOAS_MEMRD: selectedSchool.FOAS_MEMRD === null ? "" : selectedSchool.FOAS_MEMRD,
-      ROLE: role === null ? "" : role,
-      USER_UID: userUid === null ? "" : userUid,
-      GRADE: selectedGrade === null ? "" : selectedGrade,
+      GRADE: selectedGrade,
+      CLASS: selectedClass,
       label: selectedSchool.SCHUL_NM === null ? "" : selectedSchool.SCHUL_NM,
       register: true
     });
-  }, [selectedSchool, selectedGrade]);
+  }, [selectedSchool, selectedGrade, selectedClass, screenKey]);
 
   // 화면 안에 단계가 있는 경우, 뒤로가기는 우선 이전 단계로 되돌립니다.
   // 검색 단계에서는 실제로 MainScreen으로 나가는 onBack을 호출합니다.
@@ -162,6 +171,10 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey }) 
   }, []);
 
   const getGradeNumber = (grade) => parseInt(grade, 10);
+
+  const visibleGrades = GRADE_OPTIONS.filter(
+    (grade) => getGradeNumber(grade) <= (selectedSchool?.schoollevel === "2" ? 3 : GRADE_OPTIONS.length)
+  );
 
   return (
     <div className="school-register-screen">
@@ -255,21 +268,33 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey }) 
               </button>
             </div>
 
-            <p className="school-register-guide">학년을 선택해주세요.</p>
+            <p className="school-register-guide">학년과 반을 선택해주세요.</p>
 
-            <div className="grade-grid">
-              {GRADE_OPTIONS
-                .filter((grade) => getGradeNumber(grade) <= (selectedSchool.schoollevel === "2" ? 3 : GRADE_OPTIONS.length))
-                .map((grade) => (
-                  <button
-                    key={grade}
-                    type="button"
-                    className={`grade-item ${selectedGrade === grade ? "selected" : ""}`}
-                    onClick={() => handleSelectGrade(grade)}
-                  >
-                    {grade}
-                  </button>
+            <div className={`grade-grid ${selectedGrade ? "grade-grid--selected" : ""}`}>
+              {(selectedGrade ? [selectedGrade] : visibleGrades).map((grade) => (
+                <button
+                  key={grade}
+                  type="button"
+                  className={`grade-item ${selectedGrade === grade ? "selected" : ""}`}
+                  onClick={() => (selectedGrade ? handleResetGrade() : handleSelectGrade(grade))}
+                >
+                  {grade}
+                </button>
               ))}
+
+              {selectedGrade && (
+                <select
+                  className="class-select"
+                  value={selectedClass}
+                  onChange={(e) => setSelectedClass(e.target.value)}
+                  aria-label="반 선택"
+                >
+                  <option value="" disabled>반 선택</option>
+                    {CLASS_OPTIONS.map((cls) => (
+                  <option key={cls} value={cls}>{cls}</option>
+                  ))}
+                </select>
+              )}
             </div>
 
             <SchoolAppleMap 
@@ -284,7 +309,7 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey }) 
               type="button"
               className="school-register-submit-btn"
               onClick={handleSubmit}
-              disabled={!selectedGrade || saving || mapStatus !== "ready"}
+              disabled={!selectedGrade || !selectedClass || saving || mapStatus !== "ready"}
             >
               {saving ? "등록 중..." : "등록 완료"}
             </button>

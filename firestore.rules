@@ -15,7 +15,7 @@ service cloud.firestore {
     }
 
     function touchesOnlySchool() {
-      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(["school"]);
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(["studentInfo"]);
     }
 
     match /users/{userId} {

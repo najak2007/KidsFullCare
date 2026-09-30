@@ -161,8 +161,6 @@ function AcademyRegisterScreen({ onBack, userUid, role, onComplete, screenKey })
       ATPT_OFCDC_SC_CODE: selectedAcademy.ATPT_OFCDC_SC_CODE ?? "",
       ATPT_OFCDC_SC_NM: selectedAcademy.ATPT_OFCDC_SC_NM ?? "",
       REG_STTUS_NM: selectedAcademy.REG_STTUS_NM ?? "",
-      ROLE: role ?? "",
-      USER_UID: userUid ?? "",
       label: selectedAcademy.ACA_NM ?? "",
       register: true,
     });
