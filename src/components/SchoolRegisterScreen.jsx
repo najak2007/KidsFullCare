@@ -8,13 +8,14 @@
 //   2) 후보 중 하나 선택 → 상세 주소 확정
 //   3) 학년 선택 → 저장 요청 (기존 네이티브 저장 브릿지 유지)
 //
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { httpsCallable } from "firebase/functions";
 import { functions } from "../firebase"; // firebase.js에서 만든 인스턴스 그대로 사용 (리전 일치 보장)
 import "../css/SchoolRegisterScreen.css";
 import SchoolAppleMap from "./SchoolAppleMap";
 
 const searchSchoolFn = httpsCallable(functions, "searchSchool");
+const searchSchoolClassFn = httpsCallable(functions, "searchSchoolClass");
 
 /* ------------------------------------------------------------
  * 네이티브 브릿지 (저장은 기존 방식 유지)
@@ -33,7 +34,7 @@ function requestNativeSaveSchoolRegister(schoolInfo) {
 
 // 학년 목록은 필요에 맞게 조정하세요 (초/중/고 구분이 필요하면 school.level 등으로 분기)
 const GRADE_OPTIONS = ["1학년", "2학년", "3학년", "4학년", "5학년", "6학년"];
-const CLASS_OPTIONS = Array.from({ length: 15}, (_, i) => `${i + 1}반`);
+const FALLBACK_CLASS_OPTIONS = Array.from({ length: 15 }, (_, i) => String(i + 1));
 
 function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey }) {
   // "search" → 학교 이름 검색 / "gradeSelect" → 주소 확정 후 학년 선택
@@ -50,6 +51,10 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey }) 
   const [selectedClass, setSelectedClass] = useState("");
   const [mapStatus, setMapStatus] = useState("loading"); // loading | ready | notfound | error
   const [saving, setSaving] = useState(false);
+
+  const [classSearching, setClassSearching] = useState(false);
+  const [classSearchResults, setClassSearchResults] = useState([]);
+  const [classSearched, setClassSearched] = useState(false);
 
   const inputRef = useRef(null);
 
@@ -106,6 +111,33 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey }) 
     }
   }, [query]);
 
+  const handleSearchSchoolClass = useCallback(async (school, grade) => {
+    setError("");
+    setClassSearching(true);
+    setClassSearched(false);
+    setClassSearchResults([]);
+
+    console.warn("시도교육청 코드: " + school.ATPT_OFCDC_SC_CODE + "  행정표준코드: " + school.SD_SCHUL_CODE + "  학년: " + grade + "  String(grade) = " + String(parseInt(grade, 10)));
+
+    try {
+      const { data } = await searchSchoolClassFn( {eduOfficeCode: school.ATPT_OFCDC_SC_CODE, sdSchulCode: school.SD_SCHUL_CODE, grade: String(parseInt(grade, 10))} );
+
+      if (data?.errorCode) {
+        console.error("errorCode =" + errorCode);
+        setClassSearchResults([]);
+      } else {
+        setClassSearchResults(data?.results || []);
+      }
+    } catch (err) {
+      console.error("학급 정보 조회 실패:", err);
+      setError("학급 정보 검색 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
+    } finally {
+      setClassSearching(false);
+      setClassSearched(true);
+    }
+
+  }, []);
+
   const handleSelectSchool = useCallback((school) => {
     setSelectedSchool(school);
     setSelectedGrade(null);
@@ -118,12 +150,22 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey }) 
     setStep("search");
     setSelectedGrade(null);
     setSelectedClass("");
+    setClassSearchResults([]);
+    setClassSearched(false);
   }, []);
 
-  const handleSelectGrade = useCallback((grade) => {
+  const handleSelectGrade = useCallback((school, grade) => {
     setSelectedGrade(grade);
     setSelectedClass("");
+
+    handleSearchSchoolClass(school, grade);
   }, []);
+
+  const classOptions = useMemo(() => {
+    const names = classSearchResults.map((r) => r.CLASS_NM).filter(Boolean);
+    const unique = [...new Set(names)].sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
+    return unique.length > 0 ? unique : FALLBACK_CLASS_OPTIONS;
+  }, [classSearchResults]);
 
   const handleResetGrade = useCallback(() => {
     setSelectedGrade(null);
@@ -175,6 +217,8 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey }) 
   const visibleGrades = GRADE_OPTIONS.filter(
     (grade) => getGradeNumber(grade) <= (selectedSchool?.schoollevel === "2" ? 3 : GRADE_OPTIONS.length)
   );
+
+  const formatClassLabel = (cls) => (/^\d+$/.test(cls) ? `${cls}반` : cls);
 
   return (
     <div className="school-register-screen">
@@ -276,13 +320,13 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey }) 
                   key={grade}
                   type="button"
                   className={`grade-item ${selectedGrade === grade ? "selected" : ""}`}
-                  onClick={() => (selectedGrade ? handleResetGrade() : handleSelectGrade(grade))}
+                  onClick={() => (selectedGrade ? handleResetGrade() : handleSelectGrade(selectedSchool, grade))}
                 >
                   {grade}
                 </button>
               ))}
 
-              {selectedGrade && (
+              {selectedGrade && classSearched && (
                 <select
                   className="class-select"
                   value={selectedClass}
@@ -290,8 +334,10 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey }) 
                   aria-label="반 선택"
                 >
                   <option value="" disabled>반 선택</option>
-                    {CLASS_OPTIONS.map((cls) => (
-                  <option key={cls} value={cls}>{cls}</option>
+                  {classOptions.map((cls) => (
+                    <option key={cls} value={cls}>
+                      {formatClassLabel(cls)}
+                    </option>
                   ))}
                 </select>
               )}
