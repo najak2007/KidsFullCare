@@ -36,7 +36,7 @@ function requestNativeSaveSchoolRegister(schoolInfo) {
 const GRADE_OPTIONS = ["1학년", "2학년", "3학년", "4학년", "5학년", "6학년"];
 const FALLBACK_CLASS_OPTIONS = Array.from({ length: 15 }, (_, i) => String(i + 1));
 
-function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey }) {
+function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, schoolInfo }) {
   // "search" → 학교 이름 검색 / "gradeSelect" → 주소 확정 후 학년 선택
   const [step, setStep] = useState("search");
 
@@ -46,7 +46,7 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey }) 
   const [searched, setSearched] = useState(false); // 검색을 한 번이라도 시도했는지 (결과 없음 안내용)
   const [error, setError] = useState("");
 
-  const [selectedSchool, setSelectedSchool] = useState(null); // { name, address, id }
+  const [selectedSchool, setSelectedSchool] = useState(schoolInfo || null); // { name, address, id }
   const [selectedGrade, setSelectedGrade] = useState(null);
   const [selectedClass, setSelectedClass] = useState("");
   const [mapStatus, setMapStatus] = useState("loading"); // loading | ready | notfound | error
@@ -55,8 +55,24 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey }) 
   const [classSearching, setClassSearching] = useState(false);
   const [classSearchResults, setClassSearchResults] = useState([]);
   const [classSearched, setClassSearched] = useState(false);
+  const [selectedClassId, setSelectedClassId] = useState("");
 
   const inputRef = useRef(null);
+
+  useEffect(() => {
+    setSelectedClassId("");
+  }, [classSearchResults]);
+
+  useEffect(() => {
+    console.info("SchoolRegisterScreen mounted. screenKey = " + screenKey + " schoolInfo = " + JSON.stringify(schoolInfo));
+
+    if (selectedSchool && selectedSchool.register && selectedSchool.GRADE && selectedSchool.CLASS) {
+      setSelectedGrade(selectedSchool.GRADE);
+      setSelectedClass(selectedSchool.CLASS);
+      setStep("schoolRegisterComplete");
+    }
+  }, [selectedSchool]);
+
 
   useEffect(() => {
     // 저장 완료/실패는 여전히 네이티브 콜백으로 받습니다.
@@ -117,8 +133,6 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey }) 
     setClassSearched(false);
     setClassSearchResults([]);
 
-    console.warn("시도교육청 코드: " + school.ATPT_OFCDC_SC_CODE + "  행정표준코드: " + school.SD_SCHUL_CODE + "  학년: " + grade + "  String(grade) = " + String(parseInt(grade, 10)));
-
     try {
       const { data } = await searchSchoolClassFn( {eduOfficeCode: school.ATPT_OFCDC_SC_CODE, sdSchulCode: school.SD_SCHUL_CODE, grade: String(parseInt(grade, 10))} );
 
@@ -160,12 +174,31 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey }) 
 
     handleSearchSchoolClass(school, grade);
   }, []);
-
+/*
   const classOptions = useMemo(() => {
     const names = classSearchResults.map((r) => r.CLASS_NM).filter(Boolean);
     const unique = [...new Set(names)].sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
     return unique.length > 0 ? unique : FALLBACK_CLASS_OPTIONS;
   }, [classSearchResults]);
+*/
+  const classOptions = useMemo(() => {
+    if (classSearchResults.length === 0) {
+      // 조회 결과가 없을 때의 fallback (원본 항목이 없으므로 isFallback 표시)
+      return FALLBACK_CLASS_OPTIONS.map((nm) => ({
+        id: `fallback-${nm}`,
+        CLASS_NM: nm,
+        isFallback: true,
+      }));
+    }
+    return [...classSearchResults]    // 원본 배열을 변경하지 않도록 복사
+      .filter((r) => r.CLASS_NM)
+      .sort((a, b) => parseInt(a.CLASS_NM, 10) - parseInt(b.CLASS_NM, 10))
+
+  }, [classSearchResults]);
+
+  const selectedClassItem = useMemo(() => classSearchResults.find((r) => r.id === selectedClassId) ?? null, 
+    [selectedClassId, classSearchResults]
+  ); 
 
   const handleResetGrade = useCallback(() => {
     setSelectedGrade(null);
@@ -173,30 +206,31 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey }) 
   }, []);
 
   const handleSubmit = useCallback(() => {
-    if (!selectedSchool || !selectedGrade || !selectedClass) return;
+    if (!selectedSchool || !selectedGrade || !selectedClassId) return;
     setError("");
     setSaving(true);
     requestNativeSaveSchoolRegister({
       KEY: screenKey === null ? "school" : screenKey,
-      SCHUL_NM: selectedSchool.SCHUL_NM === null ? "" : selectedSchool.SCHUL_NM,
-      ORG_RDNMA: selectedSchool.ORG_RDNMA === null ? "" : selectedSchool.ORG_RDNMA,
-      ORG_RDNDA: selectedSchool.ORG_RDNDA === null ? "" : selectedSchool.ORG_RDNDA,
-      ATPT_OFCDC_SC_CODE: selectedSchool.ATPT_OFCDC_SC_CODE === null ? "" : selectedSchool.ATPT_OFCDC_SC_CODE,
-      ATPT_OFCDC_SC_NM: selectedSchool.ATPT_OFCDC_SC_NM === null ? "" : selectedSchool.ATPT_OFCDC_SC_NM,
-      SD_SCHUL_CODE: selectedSchool.SD_SCHUL_CODE === null ? "" : selectedSchool.SD_SCHUL_CODE,
-      SCHUL_KND_SC_NM: selectedSchool. SCHUL_KND_SC_NM === null ? "" : selectedSchool. SCHUL_KND_SC_NM,
-      LCTN_SC_NM: selectedSchool.LCTN_SC_NM === null ? "" : selectedSchool.LCTN_SC_NM,
-      JU_ORG_NM: selectedSchool.JU_ORG_NM === null ? "" : selectedSchool.JU_ORG_NM,
-      FOND_YMD: selectedSchool.FOND_YMD === null ? "" : selectedSchool.FOND_YMD,
-      FOND_SC_NM: selectedSchool.FOND_SC_NM === null ? "" : selectedSchool.FOND_SC_NM,
-      ORG_TELNO: selectedSchool.ORG_TELNO === null ? "" : selectedSchool.ORG_TELNO,
-      FOAS_MEMRD: selectedSchool.FOAS_MEMRD === null ? "" : selectedSchool.FOAS_MEMRD,
+      SCHUL_NM: selectedSchool.SCHUL_NM ?? "",
+      ORG_RDNMA: selectedSchool.ORG_RDNMA ?? "",
+      ORG_RDNDA: selectedSchool.ORG_RDNDA ?? "",
+      ATPT_OFCDC_SC_CODE: selectedSchool.ATPT_OFCDC_SC_CODE ?? "",
+      ATPT_OFCDC_SC_NM: selectedSchool.ATPT_OFCDC_SC_NM ?? "",
+      SD_SCHUL_CODE: selectedSchool.SD_SCHUL_CODE ?? "",
+      SCHUL_KND_SC_NM: selectedSchool. SCHUL_KND_SC_NM ?? "",
+      LCTN_SC_NM: selectedSchool.LCTN_SC_NM ?? "",
+      JU_ORG_NM: selectedSchool.JU_ORG_NM ?? "",
+      FOND_YMD: selectedSchool.FOND_YMD ?? "",
+      FOND_SC_NM: selectedSchool.FOND_SC_NM ?? "",
+      ORG_TELNO: selectedSchool.ORG_TELNO ?? "",
+      FOAS_MEMRD: selectedSchool.FOAS_MEMRD ?? "",
       GRADE: selectedGrade,
-      CLASS: selectedClass,
-      label: selectedSchool.SCHUL_NM === null ? "" : selectedSchool.SCHUL_NM,
+//      CLASS: selectedClass,
+      CLASS: selectedClassItem,
+      label: selectedSchool.SCHUL_NM ?? "",
       register: true
     });
-  }, [selectedSchool, selectedGrade, selectedClass, screenKey]);
+  }, [selectedSchool, selectedGrade, selectedClassId, screenKey]);
 
   // 화면 안에 단계가 있는 경우, 뒤로가기는 우선 이전 단계로 되돌립니다.
   // 검색 단계에서는 실제로 MainScreen으로 나가는 onBack을 호출합니다.
@@ -218,7 +252,12 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey }) 
     (grade) => getGradeNumber(grade) <= (selectedSchool?.schoollevel === "2" ? 3 : GRADE_OPTIONS.length)
   );
 
-  const formatClassLabel = (cls) => (/^\d+$/.test(cls) ? `${cls}반` : cls);
+// 기존 로직 (문자열 → "N반" 등)
+  const formatClassName = (name) => `${name}반`;   // 기존 formatClassLabel 내용을 여기에 그대로
+
+//  const formatClassLabel = (cls) => (/^\d+$/.test(cls) ? `${cls}반` : cls);
+  const formatClassLabel = (cls) =>
+  `${formatClassName(cls.CLASS_NM)}${cls.DDDEP_NM ? ` (${cls.DDDEP_NM})` : ""}`;
 
   return (
     <div className="school-register-screen">
@@ -231,7 +270,7 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey }) 
         >
           <BackArrowIcon />
         </button>
-        <h1 className="school-register-title">학교 등록</h1>
+        <h1 className="school-register-title"> {schoolInfo?.SCHUL_NM || "학교 등록"}</h1>
         <span className="school-register-topbar-spacer" />
       </div>
 
@@ -296,6 +335,15 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey }) 
           </>
         )}
 
+        {
+          step === "schoolRegisterComplete" && selectedSchool && (
+            <><SchoolAppleMap
+              address={selectedSchool.ORG_RDNMA}
+              schoolName={selectedSchool.SCHUL_NM}
+              handleMapStatus={handleMapStatusChange} /><p> {selectedSchool.CLASS.ATPT_OFCDC_SC_NM ?? ""} </p></>
+        )}  
+        
+
         {step === "gradeSelect" && selectedSchool && (
           <>
             <div className="school-selected-card">
@@ -326,19 +374,26 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey }) 
                 </button>
               ))}
 
+              { selectedGrade && classSearching && (
+                <div className="class-search-status">
+                  <span className="class-search-spinner" />
+                  <span>학급 정보를 불러오는 중...</span>
+                </div>
+              )}
+
               {selectedGrade && classSearched && (
                 <select
                   className="class-select"
-                  value={selectedClass}
-                  onChange={(e) => setSelectedClass(e.target.value)}
+                  value={selectedClassId}
+                  onChange={(e) => setSelectedClassId(e.target.value)}
                   aria-label="반 선택"
                 >
                   <option value="" disabled>반 선택</option>
-                  {classOptions.map((cls) => (
-                    <option key={cls} value={cls}>
-                      {formatClassLabel(cls)}
-                    </option>
-                  ))}
+                    { classOptions.map((cls) => (
+                      <option key={cls.id} value={cls.id}>
+                        {formatClassLabel(cls)}
+                      </option>
+                    ))}
                 </select>
               )}
             </div>
@@ -355,7 +410,7 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey }) 
               type="button"
               className="school-register-submit-btn"
               onClick={handleSubmit}
-              disabled={!selectedGrade || !selectedClass || saving || mapStatus !== "ready"}
+              disabled={!selectedGrade || !selectedClassId || saving || mapStatus !== "ready"}
             >
               {saving ? "등록 중..." : "등록 완료"}
             </button>

@@ -378,24 +378,10 @@ function MainScreen({
           <StudentMenuGrid
             studentMenus= {studentMenus}
             onSelect={(menu) => {
-              switch(menu.key) {
-                case "school":
-                  onNavigate(menu.key);
-                  break;
-                case "academy":
-                  onNavigate(menu.key);
-                  break;
-                case "parentLink":
-                  onNavigate(menu.key);
-                  break;
-                default:
-                  console.warn("아직 연결되지 않은 메뉴: ", menu.key);
-              }
+              onNavigate(menu.key, { schoolInfo: menu });
             }}
           />
         )}
-
-
       </div>
 
       <TabBar activeTab={activeTab} onChange={setActiveTab} />

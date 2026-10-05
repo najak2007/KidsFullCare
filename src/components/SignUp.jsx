@@ -196,10 +196,13 @@ function SignUp() {
   const [linkResult, setLinkResult] = useState(null);
   const [familyMembers, setFamilyMembers] = useState([]);
   const [currentScreen, setCurrentScreen] = useState({ name: "main"});
-  const [registerSchool, setRegisterSchool] = useState(null);
 
   const navigateTo = (screenName, params = {}) => {
+    console.info("navigateTo screenName = " + screenName + " params = " + JSON.stringify(params));
+    console.info("navigateTo params.register = " + params?.schoolInfo?.register + " params.SCHUL_NM = " + params?.schoolInfo?.SCHUL_NM);
+
     setCurrentScreen({ name: screenName, ...params });
+    
   };
 
   const goBack = () => {
@@ -208,8 +211,6 @@ function SignUp() {
 // onComplete?.({ screenKey: screenKey, studentInfo: selectedSchool, grade: selectedGrade });
 
   const registerComplete = ({screenKey}) => {
-    console.info("SignUp registerComplete : ", screenKey);
-
     navigateTo("main");
   }
 
@@ -572,6 +573,7 @@ function SignUp() {
           role={role}
           onComplete={registerComplete}
           screenKey= {currentScreen.name}
+          schoolInfo= { currentScreen.schoolInfo }
         />
       )}
 

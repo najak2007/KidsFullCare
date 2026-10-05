@@ -137,6 +137,24 @@
   animation: school-search-spin 0.7s linear infinite;
 }
 
+.class-search-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+  font-size: 14px;
+  color: #6b6b70;
+}
+
+.class-search-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #d9d9dc;
+  border-top-color: #4c8dff;
+  border-radius: 50%;
+  animation: school-search-spin 0.7s linear infinite;
+}
+
 @keyframes school-search-spin {
   to {
     transform: rotate(360deg);
