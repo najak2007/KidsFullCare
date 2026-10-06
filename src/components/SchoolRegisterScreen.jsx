@@ -16,6 +16,7 @@ import SchoolAppleMap from "./SchoolAppleMap";
 
 const searchSchoolFn = httpsCallable(functions, "searchSchool");
 const searchSchoolClassFn = httpsCallable(functions, "searchSchoolClass");
+const schoolTimeTableFn = httpsCallable(functions, "schoolTimeTable");
 
 /* ------------------------------------------------------------
  * 네이티브 브릿지 (저장은 기존 방식 유지)
@@ -35,6 +36,7 @@ function requestNativeSaveSchoolRegister(schoolInfo) {
 // 학년 목록은 필요에 맞게 조정하세요 (초/중/고 구분이 필요하면 school.level 등으로 분기)
 const GRADE_OPTIONS = ["1학년", "2학년", "3학년", "4학년", "5학년", "6학년"];
 const FALLBACK_CLASS_OPTIONS = Array.from({ length: 15 }, (_, i) => String(i + 1));
+const SCHOOL_MENUS = ["시간표", "급식식단", "학사일정"];
 
 function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, schoolInfo }) {
   // "search" → 학교 이름 검색 / "gradeSelect" → 주소 확정 후 학년 선택
@@ -56,6 +58,8 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, sc
   const [classSearchResults, setClassSearchResults] = useState([]);
   const [classSearched, setClassSearched] = useState(false);
   const [selectedClassId, setSelectedClassId] = useState("");
+  const [selectedMenu, setSelectedMenu] = useState("");
+  const [schoolTimeTable, setSchoolTimeTable] = useState([]);
 
   const inputRef = useRef(null);
 
@@ -174,6 +178,49 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, sc
 
     handleSearchSchoolClass(school, grade);
   }, []);
+
+  const handleSearchSchoolTimeTable = useCallback(async (selectedSchool) => {
+
+    try {
+      const { data } = await schoolTimeTableFn({ 
+        eduOfficeCode: selectedSchool.ATPT_OFCDC_SC_CODE,
+        sdSchulCode: selectedSchool.SD_SCHUL_CODE,
+        grade: selectedSchool.CLASS.GRADE,
+        classNm: selectedSchool.CLASS.CLASS_NM,
+        schoolKinkNm: selectedSchool.SCHUL_KND_SC_NM
+       }); 
+      if (data?.errorCode) {
+        setSchoolTimeTable([]);
+      } else {
+        setSchoolTimeTable(data?.results || []);
+      }
+    } catch (err) {
+      console.error("학교 시간표 검색 실패: ", err);
+      setError("학교 시간표 검색 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
+    } finally {
+
+    }
+
+  }, [])
+
+  const handleSelectMenu = useCallback((selectedSchool, menu) => {
+    setSelectedMenu(menu);
+
+    switch(menu) {
+      case "시간표":
+        handleSearchSchoolTimeTable(selectedSchool);
+        break;
+      case "급식식단":
+        break;
+      case "학사일정":
+        break;
+    }
+  }, []);
+
+  const handleResetMenu = useCallback(() => {
+    setSelectedMenu("");
+  }, []);
+
 /*
   const classOptions = useMemo(() => {
     const names = classSearchResults.map((r) => r.CLASS_NM).filter(Boolean);
@@ -337,7 +384,21 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, sc
 
         {
           step === "schoolRegisterComplete" && selectedSchool && (
-            <><SchoolAppleMap
+            <>
+            <div className={`school-info-menu-grid ${selectedMenu ? "school-info-menu-grid--selected" : ""}`}>
+              { SCHOOL_MENUS.map((menu) => (
+                <button
+                  key={menu}
+                  type="button"
+                  className={`school-info-menu-item ${selectedMenu === menu ? "selected" : ""}`}
+                  onClick={() => (selectedMenu ? handleResetMenu() : handleSelectMenu(selectedSchool, menu))}
+                >
+                  {menu}
+                </button>
+              ))}
+            </div>
+            
+            <SchoolAppleMap
               address={selectedSchool.ORG_RDNMA}
               schoolName={selectedSchool.SCHUL_NM}
               handleMapStatus={handleMapStatusChange} /><p> {selectedSchool.CLASS.ATPT_OFCDC_SC_NM ?? ""} </p></>

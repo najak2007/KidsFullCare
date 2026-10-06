@@ -287,6 +287,34 @@
   color: #ffffff;
 }
 
+/* ---------- 학교 등록 후 메뉴 그리드 ---------------- */
+.school-info-menu-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.school-info-menu-item {
+  padding: 14px 0;
+  border: 1px solid #e0e0e2;
+  border-radius: 12px;
+  background: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1c1c1e;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 0.12s ease, background 0.12s ease, color 0.12s ease;
+}
+
+.school-info-menu-item.selected {
+  border-color: #4c8dff;
+  background: #4c8dff;
+  color: #ffffff;
+}
+
+
 /* ---------- 등록 완료 버튼 ---------- */
 
 /* 4) 버튼은 flex-shrink 방지 + 위 여백만 살짝 조정 */
@@ -382,7 +410,18 @@
         background: #000000;
     }
 
+
     .school-search-input:focus {
         background: #000000;
+    }
+
+    .school-info-menu-item {
+      background: #1c1c1e;
+      color:  #ffffff; 
+    }
+
+    .grade-item {
+      background: #1c1c1e;
+      color:  #ffffff; 
     }
 }
