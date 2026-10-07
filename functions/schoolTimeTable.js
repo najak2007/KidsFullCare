@@ -16,13 +16,18 @@ exports.schoolTimeTable = onCall(
         const grade = (request.data?.grade || "").trim();
         const class_nm = (request.data?.classNm || "").trim();
         const year = new Date().getFullYear();
-        const searchDate = (request.data?.searchDate || new Date().getFullYear());
-        const startDate = (request.data?.startDate || new Date().getFullYear());
-        const endDate = (request.data?.endDate || new Date().getFullYear());
+        const month = String(new Date().getMonth() + 1).padStart(2, "0");
+        const day = String(new Date().getDate()).padStart(2, "0");
+        const currentDateString = `${year}${month}${day}`;
+        const searchDate = (request.data?.searchDate || currentDateString);
+        const startDate = (request.data?.startDate || currentDateString);
+        const endDate = (request.data?.endDate || currentDateString);
 
         let url;
 
-        const schoolKindNm = (request.data?.schoolKinkNm || "초등학교").trim();
+        const schoolKindNm = (request.data?.schoolKindNm || "초등학교").trim();
+
+        console.info("class_nm: " + class_nm + " year: " + year + " schoolKindNm: " + schoolKindNm + "  searchDate: " + searchDate + "  endDate: " + endDate + "  grade: " + grade);
 
         switch (schoolKindNm) {
             case "초등학교":
@@ -36,6 +41,8 @@ exports.schoolTimeTable = onCall(
                 break;
         }
 
+        let semValue = Number(month) > 8 ? 2 : 1;
+
         const KEY = neisKey.value();
         url.searchParams.set("KEY", KEY);
         url.searchParams.set("Type", "json");
@@ -43,7 +50,7 @@ exports.schoolTimeTable = onCall(
         url.searchParams.set("pSize", "30");
         url.searchParams.set("ATPT_OFCDC_SC_CODE", eduOfficeCode);
         url.searchParams.set("SD_SCHUL_CODE", sdSchulCode);
-        url.searchParams.set("SEM", "2");
+        url.searchParams.set("SEM", String(semValue));
         url.searchParams.set("ALL_TI_YMD", searchDate);
         url.searchParams.set("AY", year);
         url.searchParams.set("GRADE", grade);

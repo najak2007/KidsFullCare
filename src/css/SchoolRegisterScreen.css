@@ -386,6 +386,17 @@
   color: inherit;
 }
 
+.school-date-row {
+  display: flex; align-items: center; gap: 10px;
+  justify-content: flex-start;
+  margin-bottom: 12px;
+}
+.school-date-btn {
+  padding: 0; border: none; background: transparent;
+  font-size: 16px; font-weight: 700; cursor: pointer; text-align: left;
+}
+.school-date-range { font-size: 13px; color: #3b82f6; }
+
 /* ------------------------------------------------------------
  * 다크모드
  * ------------------------------------------------------------ */

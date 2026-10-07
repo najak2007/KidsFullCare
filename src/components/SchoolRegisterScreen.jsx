@@ -13,6 +13,8 @@ import { httpsCallable } from "firebase/functions";
 import { functions } from "../firebase"; // firebase.js에서 만든 인스턴스 그대로 사용 (리전 일치 보장)
 import "../css/SchoolRegisterScreen.css";
 import SchoolAppleMap from "./SchoolAppleMap";
+import DateRangePickerModal from "../pages/DateRangePickerModal";
+
 
 const searchSchoolFn = httpsCallable(functions, "searchSchool");
 const searchSchoolClassFn = httpsCallable(functions, "searchSchoolClass");
@@ -60,16 +62,28 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, sc
   const [selectedClassId, setSelectedClassId] = useState("");
   const [selectedMenu, setSelectedMenu] = useState("");
   const [schoolTimeTable, setSchoolTimeTable] = useState([]);
+  const [dateModalOpen, setDateModalOpen] = useState(false);
+  const [dateRange, setDateRange] = useState({startDate: "", endDate: ""});
 
   const inputRef = useRef(null);
+
+  const todayLabel = useMemo(() => {
+    const now = new Date();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    return `${d.getFullYear()}년 ${mm}월 ${dd}일`; 
+  }, []);
+
+  const handleConfirmDateRange = useCallback(( {startDate, endDate}) => {
+    setDateRange({startDate, endDate});
+    setDateModalOpen(false);
+  }, []);
 
   useEffect(() => {
     setSelectedClassId("");
   }, [classSearchResults]);
 
   useEffect(() => {
-    console.info("SchoolRegisterScreen mounted. screenKey = " + screenKey + " schoolInfo = " + JSON.stringify(schoolInfo));
-
     if (selectedSchool && selectedSchool.register && selectedSchool.GRADE && selectedSchool.CLASS) {
       setSelectedGrade(selectedSchool.GRADE);
       setSelectedClass(selectedSchool.CLASS);
@@ -180,18 +194,20 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, sc
   }, []);
 
   const handleSearchSchoolTimeTable = useCallback(async (selectedSchool) => {
-
     try {
       const { data } = await schoolTimeTableFn({ 
         eduOfficeCode: selectedSchool.ATPT_OFCDC_SC_CODE,
         sdSchulCode: selectedSchool.SD_SCHUL_CODE,
         grade: selectedSchool.CLASS.GRADE,
         classNm: selectedSchool.CLASS.CLASS_NM,
-        schoolKinkNm: selectedSchool.SCHUL_KND_SC_NM
+        schoolKindNm: selectedSchool.SCHUL_KND_SC_NM
        }); 
-      if (data?.errorCode) {
+
+       if (data?.errorCode) {
         setSchoolTimeTable([]);
       } else {
+        console.info("handleSearchSchoolTimeTable: " + data?.results);
+//        console.info("handleSearchSchoolTimeTable: " + JSON.stringify(data?.results));
         setSchoolTimeTable(data?.results || []);
       }
     } catch (err) {
@@ -385,6 +401,20 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, sc
         {
           step === "schoolRegisterComplete" && selectedSchool && (
             <>
+            <div className="school-date-row">
+              <button
+                type="button"
+                className="school-date-btn"
+                onClick={() => setDateModalOpen(true)}>
+                  {todayLabel}
+              </button>
+              {dateRange.startDate && (
+                <span className="school-date-range">
+                  {dateRange.startDate} ~ {dateRange.endDate}
+                </span>
+              )}
+            </div>
+
             <div className={`school-info-menu-grid ${selectedMenu ? "school-info-menu-grid--selected" : ""}`}>
               { SCHOOL_MENUS.map((menu) => (
                 <button
