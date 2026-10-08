@@ -13,7 +13,8 @@ import { httpsCallable } from "firebase/functions";
 import { functions } from "../firebase"; // firebase.js에서 만든 인스턴스 그대로 사용 (리전 일치 보장)
 import "../css/SchoolRegisterScreen.css";
 import SchoolAppleMap from "./SchoolAppleMap";
-import DateRangePickerModal from "../pages/DateRangePickerModal";
+import DateRangePickerModal, { toYmd } from "../pages/DateRangePickerModal";
+import { formatDateWithChevron } from "../utils/DateExtension";
 
 
 const searchSchoolFn = httpsCallable(functions, "searchSchool");
@@ -60,10 +61,11 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, sc
   const [classSearchResults, setClassSearchResults] = useState([]);
   const [classSearched, setClassSearched] = useState(false);
   const [selectedClassId, setSelectedClassId] = useState("");
-  const [selectedMenu, setSelectedMenu] = useState("");
+  const [selectedMenu, setSelectedMenu] = useState(SCHOOL_MENUS[0]); // "시간표"
   const [schoolTimeTable, setSchoolTimeTable] = useState([]);
   const [dateModalOpen, setDateModalOpen] = useState(false);
   const [dateRange, setDateRange] = useState({startDate: "", endDate: ""});
+  const [timeTableLoading, setTimeTableLoading] = useState(false);
 
   const inputRef = useRef(null);
 
@@ -71,7 +73,7 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, sc
     const now = new Date();
     const month = String(now.getMonth() + 1).padStart(2, "0");
     const day = String(now.getDate()).padStart(2, "0");
-    return `${d.getFullYear()}년 ${mm}월 ${dd}일`; 
+    return `${now.getFullYear()}년 ${month}월 ${day}일 ›`; 
   }, []);
 
   const handleConfirmDateRange = useCallback(( {startDate, endDate}) => {
@@ -155,7 +157,7 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, sc
       const { data } = await searchSchoolClassFn( {eduOfficeCode: school.ATPT_OFCDC_SC_CODE, sdSchulCode: school.SD_SCHUL_CODE, grade: String(parseInt(grade, 10))} );
 
       if (data?.errorCode) {
-        console.error("errorCode =" + errorCode);
+        console.error("errorCode =" + data.errorCode);
         setClassSearchResults([]);
       } else {
         setClassSearchResults(data?.results || []);
@@ -193,48 +195,51 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, sc
     handleSearchSchoolClass(school, grade);
   }, []);
 
-  const handleSearchSchoolTimeTable = useCallback(async (selectedSchool) => {
+  const handleSearchSchoolTimeTable = useCallback(async (school, range) => {
+
+    const today = toYmd(new Date());
+    const fromYmd = range?.startDate || today;
+    const toYmdValue = range?.endDate || fromYmd;
+
+    setError("");
+    setTimeTableLoading(true);
+
     try {
       const { data } = await schoolTimeTableFn({ 
-        eduOfficeCode: selectedSchool.ATPT_OFCDC_SC_CODE,
-        sdSchulCode: selectedSchool.SD_SCHUL_CODE,
-        grade: selectedSchool.CLASS.GRADE,
-        classNm: selectedSchool.CLASS.CLASS_NM,
-        schoolKindNm: selectedSchool.SCHUL_KND_SC_NM
+        eduOfficeCode: school.ATPT_OFCDC_SC_CODE,
+        sdSchulCode: school.SD_SCHUL_CODE,
+        grade: school.CLASS.GRADE,
+        classNm: school.CLASS.CLASS_NM,
+        schoolKindNm: school.SCHUL_KND_SC_NM,
+        startDate: fromYmd,
+        endDate: toYmdValue
        }); 
 
-       if (data?.errorCode) {
+      if (data?.errorCode) {
         setSchoolTimeTable([]);
-      } else {
-        console.info("handleSearchSchoolTimeTable: " + data?.results);
-//        console.info("handleSearchSchoolTimeTable: " + JSON.stringify(data?.results));
+        } else {
         setSchoolTimeTable(data?.results || []);
       }
     } catch (err) {
       console.error("학교 시간표 검색 실패: ", err);
       setError("학교 시간표 검색 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
     } finally {
-
+      setTimeTableLoading(false);
     }
-
   }, [])
 
-  const handleSelectMenu = useCallback((selectedSchool, menu) => {
+  const handleSelectMenu = useCallback((menu) => {
     setSelectedMenu(menu);
 
-    switch(menu) {
-      case "시간표":
-        handleSearchSchoolTimeTable(selectedSchool);
-        break;
-      case "급식식단":
-        break;
-      case "학사일정":
-        break;
-    }
-  }, []);
-
-  const handleResetMenu = useCallback(() => {
-    setSelectedMenu("");
+    // switch(menu) {
+    //   case "시간표":
+    //     handleSearchSchoolTimeTable(selectedSchool);
+    //     break;
+    //   case "급식식단":
+    //     break;
+    //   case "학사일정":
+    //     break;
+    // }
   }, []);
 
 /*
@@ -322,6 +327,40 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, sc
   const formatClassLabel = (cls) =>
   `${formatClassName(cls.CLASS_NM)}${cls.DDDEP_NM ? ` (${cls.DDDEP_NM})` : ""}`;
 
+  const timeTableGrid = useMemo(() => {
+    const dates = [...new Set(schoolTimeTable.map((r) => r.ALL_TI_YMD))]  // 일자 필드
+      .filter(Boolean)
+      .sort();
+
+    const maxPeriod = schoolTimeTable.reduce(
+      (max, r) => Math.max(max, parseInt(r.PERIO, 10) || 0),                // 교시 필드
+      0
+    );
+
+    const periods = Array.from({ length: maxPeriod }, (_, i) => i + 1);     // 1교시 ~ n교시 연속
+
+    const cells = {};
+    schoolTimeTable.forEach((r) => {
+      const key = `${r.ALL_TI_YMD}-${parseInt(r.PERIO, 10)}`;
+      (cells[key] ||= []).push(r.ITRT_CNTNT);                               // 수업내용 필드
+    });
+
+    return { dates, periods, cells };
+  }, [schoolTimeTable]);
+
+  const formatTimeTableHeader = (ymd) => {
+    const d = new Date(+ymd.slice(0, 4), +ymd.slice(4, 6) - 1, +ymd.slice(6, 8));
+    const weekday = ["일", "월", "화", "수", "목", "금", "토"][d.getDay()];
+    return `${ymd.slice(4, 6)}/${ymd.slice(6, 8)} (${weekday})`;
+  };
+
+
+  useEffect(() => {
+    if (step === "schoolRegisterComplete" && selectedMenu === "시간표" && selectedSchool) {
+      handleSearchSchoolTimeTable(selectedSchool, dateRange);
+    }
+  }, [step, selectedMenu, selectedSchool, dateRange, handleSearchSchoolTimeTable]);
+
   return (
     <div className="school-register-screen">
       <div className="school-register-topbar">
@@ -401,39 +440,106 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, sc
         {
           step === "schoolRegisterComplete" && selectedSchool && (
             <>
+            <SchoolAppleMap
+              address={selectedSchool.ORG_RDNMA}
+              schoolName={selectedSchool.SCHUL_NM}
+              handleMapStatus={handleMapStatusChange} />
+
             <div className="school-date-row">
               <button
                 type="button"
                 className="school-date-btn"
                 onClick={() => setDateModalOpen(true)}>
-                  {todayLabel}
+                  {
+                      dateRange.startDate ? (dateRange.startDate === dateRange.endDate ? `${formatDateWithChevron(dateRange.startDate)}` : `${formatDateWithChevron(dateRange.startDate)} ~ ${formatDateWithChevron(dateRange.endDate)}`) : `${todayLabel}`
+                  }
               </button>
-              {dateRange.startDate && (
-                <span className="school-date-range">
-                  {dateRange.startDate} ~ {dateRange.endDate}
-                </span>
-              )}
             </div>
 
-            <div className={`school-info-menu-grid ${selectedMenu ? "school-info-menu-grid--selected" : ""}`}>
-              { SCHOOL_MENUS.map((menu) => (
-                <button
-                  key={menu}
-                  type="button"
-                  className={`school-info-menu-item ${selectedMenu === menu ? "selected" : ""}`}
-                  onClick={() => (selectedMenu ? handleResetMenu() : handleSelectMenu(selectedSchool, menu))}
-                >
-                  {menu}
-                </button>
-              ))}
-            </div>
-            
-            <SchoolAppleMap
-              address={selectedSchool.ORG_RDNMA}
-              schoolName={selectedSchool.SCHUL_NM}
-              handleMapStatus={handleMapStatusChange} /><p> {selectedSchool.CLASS.ATPT_OFCDC_SC_NM ?? ""} </p></>
-        )}  
+ 
+
+            <DateRangePickerModal 
+              open={dateModalOpen}
+              initialStart={dateRange.startDate}
+              initialEnd={dateRange.endDate}
+              onClose={() => setDateModalOpen(false)}
+              onConfirm={handleConfirmDateRange}
+            />
+
+
         
+          <div className="school-tabs">
+            <div className="school-tab-list" role="tablist">
+              {SCHOOL_MENUS.map((menu, index) => {
+                const active = selectedMenu === menu;
+                return (
+                  <button
+                    key={menu}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    className={`school-tab ${active ? "active" : ""}`}
+                    style={{ zIndex: active ? SCHOOL_MENUS.length + 1 : SCHOOL_MENUS.length - index }}
+                    onClick={() => handleSelectMenu(menu)}
+                  >
+                    {menu}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div
+              className={`school-tab-panel ${selectedMenu === SCHOOL_MENUS[0] ? "school-tab-panel--first" : ""}`}
+              role="tabpanel"
+            >
+              {selectedMenu === "시간표" && (
+                timeTableLoading ? (
+                  <div className="school-search-status">
+                    <span className="school-search-spinner" />
+                    <span>시간표를 불러오는 중...</span>
+                  </div>
+                ) : timeTableGrid.periods.length === 0 ? (
+                  <p className="school-tab-empty">선택한 기간의 시간표가 없어요.</p>
+                ) : (
+                  <div className="timetable-scroll">
+                    <table className="timetable">
+                      {timeTableGrid.dates.length > 1 && (
+                        <thead>
+                          <tr>
+                            <th />
+                            {timeTableGrid.dates.map((ymd) => (
+                              <th key={ymd}>{formatTimeTableHeader(ymd)}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                      )}
+                      <tbody>
+                        {timeTableGrid.periods.map((period) => (
+                          <tr key={period}>
+                            <th className="timetable-period" scope="row">{period}교시</th>
+                            {timeTableGrid.dates.map((ymd) => {
+                              const subject = timeTableGrid.cells[`${ymd}-${period}`]?.join(", ");
+                              return (
+                                <td key={ymd} className={subject ? "" : "timetable-empty"}>
+                                  {subject ?? "-"}
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )
+              )}
+
+              {selectedMenu === "급식식단" && <p className="school-tab-empty">급식식단은 준비 중이에요.</p>}
+              {selectedMenu === "학사일정" && <p className="school-tab-empty">학사일정은 준비 중이에요.</p>}
+            </div>
+          </div>
+
+          </>
+        )}  
 
         {step === "gradeSelect" && selectedSchool && (
           <>

@@ -19,15 +19,12 @@ exports.schoolTimeTable = onCall(
         const month = String(new Date().getMonth() + 1).padStart(2, "0");
         const day = String(new Date().getDate()).padStart(2, "0");
         const currentDateString = `${year}${month}${day}`;
-        const searchDate = (request.data?.searchDate || currentDateString);
         const startDate = (request.data?.startDate || currentDateString);
         const endDate = (request.data?.endDate || currentDateString);
 
         let url;
 
         const schoolKindNm = (request.data?.schoolKindNm || "초등학교").trim();
-
-        console.info("class_nm: " + class_nm + " year: " + year + " schoolKindNm: " + schoolKindNm + "  searchDate: " + searchDate + "  endDate: " + endDate + "  grade: " + grade);
 
         switch (schoolKindNm) {
             case "초등학교":
@@ -51,7 +48,6 @@ exports.schoolTimeTable = onCall(
         url.searchParams.set("ATPT_OFCDC_SC_CODE", eduOfficeCode);
         url.searchParams.set("SD_SCHUL_CODE", sdSchulCode);
         url.searchParams.set("SEM", String(semValue));
-        url.searchParams.set("ALL_TI_YMD", searchDate);
         url.searchParams.set("AY", year);
         url.searchParams.set("GRADE", grade);
         url.searchParams.set("CLASS_NM", class_nm);

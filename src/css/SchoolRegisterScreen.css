@@ -287,33 +287,101 @@
   color: #ffffff;
 }
 
-/* ---------- 학교 등록 후 메뉴 그리드 ---------------- */
-.school-info-menu-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  margin-top: 4px;
+/* ---------- 탭 카드 ---------- */
+.school-tabs {
+  margin: 16px 0;
+  --tab-bg: #eef4ff;          /* 선택된 탭 + 패널 배경 (같은 색) */
+  --tab-bg-inactive: #d9e4f7; /* 선택 안 된 탭 */
+  --tab-accent: #000000;
 }
 
-.school-info-menu-item {
-  padding: 14px 0;
-  border: 1px solid #e0e0e2;
-  border-radius: 12px;
-  background: #ffffff;
+.school-tab-list {
+  display: flex;
+  position: relative;
+  padding-left: 0px;
+}
+
+.school-tab {
+  position: relative;
+  margin-right: -12px;          /* 옆 탭과 겹치기 */
+  padding: 11px 26px 10px 22px;
+  border: none;
+  border-radius: 16px 16px 0 0;
+  background: var(--tab-bg-inactive);
+  color: #6b7a90;
   font-size: 15px;
   font-weight: 600;
-  color: #1c1c1e;
   cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  transition: border-color 0.12s ease, background 0.12s ease, color 0.12s ease;
+  box-shadow: 2px 0 4px rgba(15, 23, 42, 0.06);
+  transition: background 0.15s, color 0.15s;
 }
 
-.school-info-menu-item.selected {
-  border-color: #4c8dff;
-  background: #4c8dff;
-  color: #ffffff;
+.school-tab.active {
+  background: var(--tab-bg);
+  color: var(--tab-accent);
+  font-weight: 700;
+  margin-bottom: -1px;          /* 패널과 이음새 없이 붙이기 */
+  padding-top: 13px;            /* 선택된 탭이 살짝 더 높게 */
 }
 
+.school-tab-panel {
+  position: relative;
+  z-index: 5;                   /* 선택 안 된 탭 위로, 선택된 탭 아래로 */
+  min-height: 120px;
+  padding: 16px 14px 18px;
+  background: var(--tab-bg);
+  border-radius: 0 16px 16px 16px;   /* 왼쪽 위만 각지게 (좌상 우상 우하 좌하 순서) */
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
+}
+
+/* .school-tab-panel--first { border-top-left-radius: 0; } */ /* 첫 탭 선택 시 모서리 연결 */
+
+.school-tab-empty {
+  margin: 28px 0;
+  text-align: center;
+  font-size: 14px;
+  color: #7b8798;
+}
+
+/* ---------- 시간표 ---------- */
+.timetable-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+.timetable {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 8px;        /* 행 사이 간격 */
+  font-size: 15px;
+}
+
+.timetable thead th {
+  padding: 0 6px 2px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #7b8798;
+  white-space: nowrap;
+}
+
+.timetable tbody th,
+.timetable tbody td {
+  padding: 13px 10px;
+  background: #fff;
+  text-align: center;
+  word-break: keep-all;
+}
+.timetable tbody th:first-child,
+.timetable tbody td:first-child { border-radius: 12px 0 0 12px; }
+.timetable tbody td:last-child  { border-radius: 0 12px 12px 0; }
+
+.timetable-period {
+  width: 68px;
+  min-width: 68px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--tab-accent);
+  white-space: nowrap;
+}
+.timetable tbody td { min-width: 72px; font-weight: 600; color: #1f2937; }
+.timetable tbody td.timetable-empty { color: #b5bfcc; font-weight: 400; }
 
 /* ---------- 등록 완료 버튼 ---------- */
 
@@ -392,10 +460,22 @@
   margin-bottom: 12px;
 }
 .school-date-btn {
-  padding: 0; border: none; background: transparent;
-  font-size: 16px; font-weight: 700; cursor: pointer; text-align: left;
+  padding: 0; 
+  border: none; 
+  background: transparent;
+  font-size: 16px; 
+  font-weight: 700; 
+  cursor: pointer; 
+  text-align: left;
+  color:#000000;
+  text-decoration: underline;
 }
-.school-date-range { font-size: 13px; color: #3b82f6; }
+.school-date-range { 
+  font-size: 13px; 
+  color: #000000; 
+}
+
+
 
 /* ------------------------------------------------------------
  * 다크모드
@@ -434,5 +514,10 @@
     .grade-item {
       background: #1c1c1e;
       color:  #ffffff; 
+    }
+
+    .school-date-btn,
+    .school-date-range { 
+      color: #ffffff; 
     }
 }
