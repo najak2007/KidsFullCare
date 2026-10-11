@@ -20,6 +20,8 @@ import { formatDateWithChevron } from "../utils/DateExtension";
 const searchSchoolFn = httpsCallable(functions, "searchSchool");
 const searchSchoolClassFn = httpsCallable(functions, "searchSchoolClass");
 const schoolTimeTableFn = httpsCallable(functions, "schoolTimeTable");
+const schoolLunchFn = httpsCallable(functions, "schoolLunch");
+const schoolEventsFn = httpsCallable(functions, "schoolEvents");
 
 /* ------------------------------------------------------------
  * 네이티브 브릿지 (저장은 기존 방식 유지)
@@ -36,10 +38,29 @@ function requestNativeSaveSchoolRegister(schoolInfo) {
   }
 }
 
+function requestNativeCheckHoliday(ymd) {
+  if (window.webkit?.messageHandlers?.getHolidays) { 
+    window.webkit.messageHandlers.getHolidays.postMessage( ymd );
+  } else if (window.AndroidBridge?.getHolidays) {
+    window.AndroidBridge.getHolidays(JSON.stringify( ymd ));
+  } else {
+    console.warn("Native 휴일 확인 브릿지를 찾을 수 없습니다.");
+  }
+}
+
 // 학년 목록은 필요에 맞게 조정하세요 (초/중/고 구분이 필요하면 school.level 등으로 분기)
 const GRADE_OPTIONS = ["1학년", "2학년", "3학년", "4학년", "5학년", "6학년"];
 const FALLBACK_CLASS_OPTIONS = Array.from({ length: 15 }, (_, i) => String(i + 1));
 const SCHOOL_MENUS = ["시간표", "급식식단", "학사일정"];
+const GRADE_EVENT_FIELDS = {
+    1: "ONE_GRADE_EVENT_YN",
+    2: "TW_GRADE_EVENT_YN",
+    3: "THREE_GRADE_EVENT_YN",
+    4: "FR_GRADE_EVENT_YN",
+    5: "FIV_GRADE_EVENT_YN",
+    6: "SIX_GRADE_EVENT_YN",
+};
+
 
 function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, schoolInfo }) {
   // "search" → 학교 이름 검색 / "gradeSelect" → 주소 확정 후 학년 선택
@@ -66,6 +87,11 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, sc
   const [dateModalOpen, setDateModalOpen] = useState(false);
   const [dateRange, setDateRange] = useState({startDate: "", endDate: ""});
   const [timeTableLoading, setTimeTableLoading] = useState(false);
+  const [lunchLoading, setLunchLoading] = useState(false);
+  const [eventsLoading, setEventsLoading] = useState(false);
+  const [schoolLunchTable, setSchoolLunchTable] = useState([]);
+  const [schoolEventTable, setSchoolEventTable] = useState([]);
+  const [isHoliday, setIsHoliday] = useState(false); // 선택한 날짜의 툐/일요일 여부 확인
 
   const inputRef = useRef(null);
 
@@ -105,6 +131,10 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, sc
     window.onNativeschoolRegisterError = (payload) => {
       setSaving(false);
       setError(payload?.message || "학교 등록 중 오류가 발생했습니다.");
+    };
+
+    window.onNativeHoliday = (payload) => {
+      // Handle native holiday data
     };
 
     return () => {
@@ -195,8 +225,8 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, sc
     handleSearchSchoolClass(school, grade);
   }, []);
 
+  
   const handleSearchSchoolTimeTable = useCallback(async (school, range) => {
-
     const today = toYmd(new Date());
     const fromYmd = range?.startDate || today;
     const toYmdValue = range?.endDate || fromYmd;
@@ -228,18 +258,71 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, sc
     }
   }, [])
 
+  const handleSearchSchoolLunch = useCallback(async (school, range) => {
+    setError("");
+    setLunchLoading(true);
+
+    console.warn("급식식단 검색: " + school.SCHUL_NM + "  " + school.ATPT_OFCDC_SC_CODE + "  " + school.SD_SCHUL_CODE + "  " + range?.startDate + "  " + range?.endDate);
+
+    try {
+      const { data } = await schoolLunchFn({
+        eduOfficeCode: school.ATPT_OFCDC_SC_CODE,
+        sdSchulCode: school.SD_SCHUL_CODE,
+        startDate: range?.startDate || toYmd(new Date()),
+        endDate: range?.endDate || toYmd(new Date())
+      });
+
+      if (data?.errorCode) {
+        setSchoolLunchTable([]);
+      } else {
+        setSchoolLunchTable(data?.results || []);
+      }
+    } catch (err) {
+      console.error("학교 급식식단 검색 실패: ", err);
+      setError("학교 급식식단 검색 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
+    } finally {
+      setLunchLoading(false);
+    }
+  }, []);
+
+  const handleSearchSchoolEvents = useCallback(async (school, range) => {
+    console.warn("학사일정 검색: " + school.SCHUL_NM + "  " + school.ATPT_OFCDC_SC_CODE + "  " + school.SD_SCHUL_CODE + "  " + range?.startDate + "  " + range?.endDate);
+    setError("");
+    setEventsLoading(true);
+
+    try {
+      const { data } = await schoolEventsFn({
+        eduOfficeCode: school.ATPT_OFCDC_SC_CODE,
+        sdSchulCode: school.SD_SCHUL_CODE,
+        startDate: range?.startDate || toYmd(new Date()),
+        endDate: range?.endDate || toYmd(new Date())
+      });
+
+      if (data?.errorCode) {
+        setSchoolEventTable([]);
+      } else {
+        setSchoolEventTable(data?.results || []);
+      }
+    } catch (err) {
+      console.error("학교 학사일정 검색 실패: ", err);
+      setError("학교 학사일정 검색 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
+    } finally {
+      setEventsLoading(false);
+    }
+  }, []);
+
   const handleSelectMenu = useCallback((menu) => {
     setSelectedMenu(menu);
+  }, []);
 
-    // switch(menu) {
-    //   case "시간표":
-    //     handleSearchSchoolTimeTable(selectedSchool);
-    //     break;
-    //   case "급식식단":
-    //     break;
-    //   case "학사일정":
-    //     break;
-    // }
+  const handleSearchSchoolScheduleInfo = useCallback(async (school, range, menu) => {
+    if (menu === "시간표") {
+      await handleSearchSchoolTimeTable(school, range);
+    } else if (menu === "급식식단") {   
+      await handleSearchSchoolLunch(school, range);
+    } else if (menu === "학사일정") { 
+      await handleSearchSchoolEvents(school, range);
+    }
   }, []);
 
 /*
@@ -293,7 +376,6 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, sc
       ORG_TELNO: selectedSchool.ORG_TELNO ?? "",
       FOAS_MEMRD: selectedSchool.FOAS_MEMRD ?? "",
       GRADE: selectedGrade,
-//      CLASS: selectedClass,
       CLASS: selectedClassItem,
       label: selectedSchool.SCHUL_NM ?? "",
       register: true
@@ -328,25 +410,68 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, sc
   `${formatClassName(cls.CLASS_NM)}${cls.DDDEP_NM ? ` (${cls.DDDEP_NM})` : ""}`;
 
   const timeTableGrid = useMemo(() => {
-    const dates = [...new Set(schoolTimeTable.map((r) => r.ALL_TI_YMD))]  // 일자 필드
+    // 1. ITRT_CNTNT가 비어있지 않은 유효한 데이터만 필터링
+    const validData = schoolTimeTable.filter(
+      (r) => r.ITRT_CNTNT && r.ITRT_CNTNT.trim() !== ""
+    );
+
+    // 데이터가 아예 없는 경우 빈 상태 반환
+    if (validData.length === 0) {
+      return { dates: [], periods: [], cells: {} };
+    }
+
+    // 2. 유효한 데이터 기준으로 일자 추출 및 정렬
+    const dates = [...new Set(validData.map((r) => r.ALL_TI_YMD))]
       .filter(Boolean)
       .sort();
 
-    const maxPeriod = schoolTimeTable.reduce(
-      (max, r) => Math.max(max, parseInt(r.PERIO, 10) || 0),                // 교시 필드
+    // 3. 유효한 데이터 기준으로 최대 교시 계산
+    const maxPeriod = validData.reduce(
+      (max, r) => Math.max(max, parseInt(r.PERIO, 10) || 0),
       0
     );
 
-    const periods = Array.from({ length: maxPeriod }, (_, i) => i + 1);     // 1교시 ~ n교시 연속
+    const periods = Array.from({ length: maxPeriod }, (_, i) => i + 1);
 
+    // 4. 셀 데이터 맵 생성
     const cells = {};
-    schoolTimeTable.forEach((r) => {
+    validData.forEach((r) => {
       const key = `${r.ALL_TI_YMD}-${parseInt(r.PERIO, 10)}`;
-      (cells[key] ||= []).push(r.ITRT_CNTNT);                               // 수업내용 필드
+      (cells[key] ||= []).push(r.ITRT_CNTNT);
     });
 
     return { dates, periods, cells };
   }, [schoolTimeTable]);
+
+  const mealByDate = useMemo(() => {
+    const mealMap = {};
+    schoolLunchTable.forEach((meal) => {
+      (mealMap[meal.MLSV_YMD] ||= []).push(meal);
+    });
+
+    return Object.keys(mealMap)
+        .sort()
+        .map((ymd) => ({
+          ymd,
+          meals: mealMap[ymd].sort((a, b) => Number(a.MMEAL_SC_CODE) - Number(b.MMEAL_SC_CODE)),  // 아침, 점심, 저녁 순서
+        }));
+  }, [schoolLunchTable]);
+
+  const eventsByDate = useMemo(() => {
+    const gradeNum = parseInt(selectedGrade, 10);
+    const gradeField = GRADE_EVENT_FIELDS[gradeNum];
+
+    const map = {};
+    schoolEventTable.forEach((e) => {
+      // 등록한 학년에 해당하지 않는 행사는 제외 (학년 정보가 없으면 전부 표시)
+      if (gradeField && e[gradeField] === "N") return;
+      (map[e.AA_YMD] ||= []).push(e);
+    });
+
+    return Object.keys(map)
+      .sort()
+      .map((ymd) => ({ ymd, events: map[ymd] }));
+  }, [schoolEventTable, selectedGrade]);
 
   const formatTimeTableHeader = (ymd) => {
     const d = new Date(+ymd.slice(0, 4), +ymd.slice(4, 6) - 1, +ymd.slice(6, 8));
@@ -354,12 +479,11 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, sc
     return `${ymd.slice(4, 6)}/${ymd.slice(6, 8)} (${weekday})`;
   };
 
-
   useEffect(() => {
-    if (step === "schoolRegisterComplete" && selectedMenu === "시간표" && selectedSchool) {
-      handleSearchSchoolTimeTable(selectedSchool, dateRange);
+    if (step === "schoolRegisterComplete" && selectedSchool && selectedMenu) {
+      handleSearchSchoolScheduleInfo(selectedSchool, dateRange, selectedMenu);
     }
-  }, [step, selectedMenu, selectedSchool, dateRange, handleSearchSchoolTimeTable]);
+  }, [step, selectedMenu, selectedSchool, dateRange, handleSearchSchoolScheduleInfo]);
 
   return (
     <div className="school-register-screen">
@@ -456,8 +580,6 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, sc
               </button>
             </div>
 
- 
-
             <DateRangePickerModal 
               open={dateModalOpen}
               initialStart={dateRange.startDate}
@@ -533,8 +655,46 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, sc
                 )
               )}
 
-              {selectedMenu === "급식식단" && <p className="school-tab-empty">급식식단은 준비 중이에요.</p>}
-              {selectedMenu === "학사일정" && <p className="school-tab-empty">학사일정은 준비 중이에요.</p>}
+              {selectedMenu === "급식식단" && (
+                lunchLoading ? (
+                  <div className="school-search-status">
+                    <span className="school-search-spinner" />
+                    <span>급식 정보를 불러오는 중...</span>
+                  </div>
+                ) : mealByDate.length === 0 ? (
+                  <p className="school-tab-empty">선택한 기간의 급식 정보가 없어요.</p>
+                ) : (
+                  <div className="meal-list">
+                    {mealByDate.map(({ ymd, meals }) => (
+                      <section key={ymd} className="meal-day">
+                        {mealByDate.length > 1 && (
+                          <h3 className="meal-day-title">{formatTimeTableHeader(ymd)}</h3>
+                        )}
+                        {meals.map((meal) => (
+                          <MealCard key={meal.id ?? `${ymd}-${meal.MMEAL_SC_CODE}`} meal={meal} />
+                        ))}
+                      </section>
+                    ))}
+                  </div>
+                )
+              )}
+
+              {selectedMenu === "학사일정" && (
+                eventsLoading ? (
+                  <div className="school-search-status">
+                    <span className="school-search-spinner" />
+                    <span>학사일정을 불러오는 중...</span>
+                  </div>
+                ) : eventsByDate.length === 0 ? (
+                  <p className="school-tab-empty">선택한 기간의 학사일정이 없어요.</p>
+                ) : (
+                  <div className="meal-list">
+                    {eventsByDate.map(({ ymd, events }) => (
+                      <EventDayCard key={ymd} ymd={ymd} events={events} />
+                    ))}
+                  </div>
+                )
+              )}            
             </div>
           </div>
 
@@ -629,6 +789,175 @@ function BackArrowIcon() {
         strokeLinejoin="round"
       />
     </svg>
+  );
+}
+
+/* ------------------------------------------------------------
+ * 급식 표시용 helper
+ * ------------------------------------------------------------ */
+
+const splitBr = (text) =>
+  (text ?? "").split(/<br\s*\/?>/i).map((s) => s.trim()).filter(Boolean);
+
+// "돈까스(ㅋㅋㅋ) (5.6.10)" → { name: "돈까스(ㅋㅋㅋ)", allergies: "5·6·10" }
+// 이름 안의 괄호는 그대로 두고, 끝의 숫자 괄호만 알레르기 정보로 분리
+function parseDishes(text) {
+  return splitBr(text).map((line) => {
+    const m = line.match(/^(.*?)\s*\(([\d.]+)\)\s*$/);
+    const rawName = m ? m[1] : line;
+    return {
+      name: rawName.replace(/\*+/g, "").trim(),
+      allergies: m ? m[2].split(".").filter(Boolean).join("·") : "",
+    };
+  });
+}
+
+// "탄수화물(g) : 72.4" → { label: "탄수화물(g)", value: "72.4" }
+function parseInfoLines(text) {
+  return splitBr(text).map((line) => {
+    const idx = line.indexOf(" : ");
+    return idx < 0
+      ? { label: line, value: "" }
+      : { label: line.slice(0, idx), value: line.slice(idx + 3) };
+  });
+}
+
+const MACRO_LABELS = ["탄수화물", "단백질", "지방"];
+
+function splitUnit(label) {
+  const m = label.match(/^(.*?)\((.*)\)$/);
+  return m ? { name: m[1], unit: m[2] } : { name: label, unit: "" };
+}
+
+function MealCard({ meal }) {
+  const dishes = parseDishes(meal.DDISH_NM);
+  const nutrients = parseInfoLines(meal.NTR_INFO);
+  const origins = parseInfoLines(meal.ORPLC_INFO);
+  const macros = nutrients.filter((n) => MACRO_LABELS.some((k) => n.label.startsWith(k)));
+
+  return (
+    <article className="meal-card">
+      <header className="meal-card-header">
+        <span className={`meal-badge meal-badge--${meal.MMEAL_SC_CODE}`}>
+          {meal.MMEAL_SC_NM}
+        </span>
+        {meal.CAL_INFO && <span className="meal-kcal">{meal.CAL_INFO}</span>}
+      </header>
+
+      <ul className="meal-dish-list">
+        {dishes.map((dish, i) => (
+          <li key={`${dish.name}-${i}`} className="meal-dish">
+            <span className="meal-dish-name">{dish.name}</span>
+            {dish.allergies && <span className="meal-dish-allergy">{dish.allergies}</span>}
+          </li>
+        ))}
+      </ul>
+
+      {macros.length > 0 && (
+        <div className="meal-macros">
+          {macros.map((n) => {
+            const { name, unit } = splitUnit(n.label);
+            return (
+              <div key={n.label} className="meal-macro">
+                <span className="meal-macro-label">{name}</span>
+                <strong>{n.value}{unit}</strong>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {nutrients.length > 0 && (
+        <details className="meal-details">
+          <summary>영양정보 전체</summary>
+          <dl className="meal-info-grid">
+            {nutrients.map((n) => {
+              const { name, unit } = splitUnit(n.label);
+              return (
+                <div key={n.label} className="meal-info-row">
+                  <dt>{name}</dt>
+                  <dd>{n.value}{unit && <small> {unit}</small>}</dd>
+                </div>
+              );
+            })}
+          </dl>
+        </details>
+      )}
+
+      {origins.length > 0 && (
+        <details className="meal-details">
+          <summary>원산지 정보</summary>
+          <dl className="meal-info-grid">
+            {origins.map((o) => (
+              <div key={o.label} className="meal-info-row">
+                <dt>{o.label}</dt>
+                <dd>{o.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </details>
+      )}
+    </article>
+  );
+}
+
+/* ------------------------------------------------------------
+ * 학사일정 표시용 helper
+ * ------------------------------------------------------------ */
+
+const WEEKDAYS_KO = ["일", "월", "화", "수", "목", "금", "토"];
+
+// 적용 학년 라벨: "N"이 하나도 없으면 전학년, 아니면 해당 학년만 나열
+function getEventGradeLabel(event) {
+  const entries = Object.entries(GRADE_EVENT_FIELDS)
+    .filter(([, field]) => event[field] !== undefined);
+  if (entries.length === 0) return "";
+
+  const applied = entries.filter(([, field]) => event[field] === "Y").map(([g]) => g);
+  if (applied.length === 0) return "";
+  if (applied.length === entries.length) return "전학년";
+  return `${applied.join("·")}학년`;
+}
+
+function EventDayCard({ ymd, events }) {
+  const date = new Date(+ymd.slice(0, 4), +ymd.slice(4, 6) - 1, +ymd.slice(6, 8));
+  const weekday = date.getDay();
+  const weekdayClass = weekday === 0 ? "sun" : weekday === 6 ? "sat" : "";
+
+  return (
+    <article className="event-day-card">
+      <div className="event-date-line">
+        <span className="event-date-text">
+          {Number(ymd.slice(4, 6))}월 {Number(ymd.slice(6, 8))}일
+        </span>
+        <span className={`event-date-weekday ${weekdayClass}`}>({WEEKDAYS_KO[weekday]})</span>
+      </div>
+
+      <ul className="event-list">
+        {events.map((event, i) => {
+          const gradeLabel = getEventGradeLabel(event);
+          const dayType =
+            event.SBTR_DD_SC_NM && event.SBTR_DD_SC_NM !== "해당없음" ? event.SBTR_DD_SC_NM : "";
+
+          return (
+            <li key={`${ymd}-${event.EVENT_NM}-${i}`} className="event-item">
+              <div className="event-item-top">
+                <span className="event-name">{event.EVENT_NM}</span>
+              </div>
+
+              {(dayType || gradeLabel) && (
+                <div className="event-tags">
+                  {dayType && <span className="event-tag event-tag--holiday">{dayType}</span>}
+                  {gradeLabel && <span className="event-tag">{gradeLabel}</span>}
+                </div>
+              )}
+
+              {event.EVENT_CNTNT && <p className="event-desc">{event.EVENT_CNTNT}</p>}
+            </li>
+          );
+        })}
+      </ul>
+    </article>
   );
 }
 

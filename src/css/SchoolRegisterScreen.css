@@ -475,7 +475,111 @@
   color: #000000; 
 }
 
+/* ---------- 급식 ---------- */
+.meal-list { display: flex; flex-direction: column; gap: 18px; }
+.meal-day { display: flex; flex-direction: column; gap: 10px; }
+.meal-day-title { margin: 0 2px; font-size: 13px; font-weight: 700; color: #6b7a90; }
 
+.meal-card {
+  padding: 16px 16px 6px;
+  background: #fff;
+  border-radius: 14px;
+}
+
+.meal-card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px;
+}
+.meal-badge {
+  padding: 4px 11px; border-radius: 999px;
+  font-size: 12px; font-weight: 700;
+  background: #e8f0fe; color: var(--tab-accent, #2563eb);
+}
+.meal-badge--1 { background: #fff3dc; color: #b7791f; } /* 조식 */
+.meal-badge--3 { background: #efe7ff; color: #6d3fd1; } /* 석식 */
+.meal-kcal { font-size: 13px; font-weight: 700; color: #ef6c3c; }
+
+.meal-dish-list { list-style: none; margin: 0; padding: 0; }
+.meal-dish {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px dashed #e6ebf2;
+}
+.meal-dish:last-child { border-bottom: none; }
+.meal-dish-name { font-size: 15px; font-weight: 600; color: #1f2937; word-break: keep-all; }
+.meal-dish-allergy { flex-shrink: 0; font-size: 11px; color: #a3adbb; letter-spacing: 0.3px; }
+
+.meal-macros {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+  margin: 12px 0 4px;
+}
+.meal-macro {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 9px 4px; border-radius: 10px; background: #f3f6fb;
+}
+.meal-macro-label { font-size: 11px; color: #7b8798; }
+.meal-macro strong { font-size: 14px; color: #1f2937; }
+
+.meal-details { border-top: 1px solid #eef1f6; margin-top: 10px; }
+.meal-details summary {
+  list-style: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 11px 0; font-size: 13px; font-weight: 600; color: #6b7a90;
+}
+.meal-details summary::-webkit-details-marker { display: none; }
+.meal-details summary::after {
+  content: "›"; font-size: 18px; transition: transform 0.15s;
+}
+.meal-details[open] summary::after { transform: rotate(90deg); }
+
+.meal-info-grid { margin: 0 0 10px; }
+.meal-info-row {
+  display: flex; justify-content: space-between; gap: 12px;
+  padding: 6px 0; font-size: 13px;
+}
+.meal-info-row dt { color: #7b8798; }
+.meal-info-row dd { margin: 0; font-weight: 600; color: #1f2937; text-align: right; }
+.meal-info-row dd small { font-weight: 400; color: #a3adbb; }
+
+
+/* ---------- 학사일정 ---------- */
+.event-day-card {
+  display: flex;
+  flex-direction: column;          /* 날짜 줄 위, 행사 목록 아래 */
+  gap: 8px;
+  padding: 14px 16px;
+  background: #fff;
+  border-radius: 14px;
+  text-align: left;
+}
+
+.event-date-line {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  white-space: nowrap;             /* 줄바꿈 방지 */
+}
+.event-date-text { font-size: 16px; font-weight: 800; color: var(--tab-accent, #2563eb); }
+.event-date-weekday { font-size: 13px; font-weight: 600; color: #6b7a90; }
+.event-date-weekday.sun { color: #e5484d; }
+.event-date-weekday.sat { color: #3b82f6; }
+
+.event-list { margin: 0; padding: 0; list-style: none; text-align: left; }
+.event-item { padding: 9px 0; border-bottom: 1px dashed #e6ebf2; }
+.event-item:first-child { padding-top: 2px; }
+.event-item:last-child  { padding-bottom: 2px; border-bottom: none; }
+
+.event-name { font-size: 15px; font-weight: 700; color: #1f2937; word-break: keep-all; }
+
+.event-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+.event-tag {
+  padding: 3px 9px; border-radius: 999px;
+  font-size: 11px; font-weight: 600;
+  background: #f1f4f9; color: #6b7a90;
+}
+.event-tag--holiday { background: #ffe9e6; color: #d9442b; }
+
+.event-desc { margin: 6px 0 0; font-size: 13px; line-height: 1.5; color: #6b7a90; }
 
 /* ------------------------------------------------------------
  * 다크모드
