@@ -39,6 +39,9 @@ function requestNativeSaveSchoolRegister(schoolInfo) {
 }
 
 function requestNativeCheckHoliday(ymd) {
+
+  console.info("requestNativeCheckHoliday ymd = " + ymd);
+
   if (window.webkit?.messageHandlers?.getHolidays) { 
     window.webkit.messageHandlers.getHolidays.postMessage( ymd );
   } else if (window.AndroidBridge?.getHolidays) {
@@ -91,7 +94,7 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, sc
   const [eventsLoading, setEventsLoading] = useState(false);
   const [schoolLunchTable, setSchoolLunchTable] = useState([]);
   const [schoolEventTable, setSchoolEventTable] = useState([]);
-  const [isHoliday, setIsHoliday] = useState(false); // 선택한 날짜의 툐/일요일 여부 확인
+  const [isHoliday, setIsHoliday] = useState(true); // 선택한 날짜의 툐/일요일 여부 확인
 
   const inputRef = useRef(null);
 
@@ -103,6 +106,15 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, sc
   }, []);
 
   const handleConfirmDateRange = useCallback(( {startDate, endDate}) => {
+
+    console.info("handleConfirmDateRange startDate = " + startDate + "  endDate = " + endDate);
+    setIsHoliday(true);
+
+    if (startDate === endDate) {
+      requestNativeCheckHoliday(startDate);
+    } else {
+      setIsHoliday(false);
+    }
     setDateRange({startDate, endDate});
     setDateModalOpen(false);
   }, []);
@@ -116,6 +128,7 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, sc
       setSelectedGrade(selectedSchool.GRADE);
       setSelectedClass(selectedSchool.CLASS);
       setStep("schoolRegisterComplete");
+      requestNativeCheckHoliday(toYmd(new Date()));
     }
   }, [selectedSchool]);
 
@@ -134,12 +147,13 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, sc
     };
 
     window.onNativeHoliday = (payload) => {
-      // Handle native holiday data
+      setIsHoliday(payload.isHoliday);
     };
 
     return () => {
       delete window.onNativeschoolRegisterComplete;
       delete window.onNativeschoolRegisterError;
+      delete window.onNativeHoliday;
     };
     // selectedSchool/selectedGrade는 콜백 안에서 최신값을 참조해야 하므로 의존성에 포함
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -226,12 +240,18 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, sc
   }, []);
 
   
-  const handleSearchSchoolTimeTable = useCallback(async (school, range) => {
+  const handleSearchSchoolTimeTable = useCallback(async (school, range, holiday) => {
     const today = toYmd(new Date());
     const fromYmd = range?.startDate || today;
     const toYmdValue = range?.endDate || fromYmd;
 
     setError("");
+
+    if (holiday) {
+      setSchoolTimeTable([]);
+      return;
+    }
+
     setTimeTableLoading(true);
 
     try {
@@ -258,11 +278,15 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, sc
     }
   }, [])
 
-  const handleSearchSchoolLunch = useCallback(async (school, range) => {
+  const handleSearchSchoolLunch = useCallback(async (school, range, holiday) => {
     setError("");
-    setLunchLoading(true);
 
-    console.warn("급식식단 검색: " + school.SCHUL_NM + "  " + school.ATPT_OFCDC_SC_CODE + "  " + school.SD_SCHUL_CODE + "  " + range?.startDate + "  " + range?.endDate);
+    if (holiday) {
+      setSchoolLunchTable([]);
+      return;
+    }
+
+    setLunchLoading(true);
 
     try {
       const { data } = await schoolLunchFn({
@@ -315,11 +339,13 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, sc
     setSelectedMenu(menu);
   }, []);
 
-  const handleSearchSchoolScheduleInfo = useCallback(async (school, range, menu) => {
+  const handleSearchSchoolScheduleInfo = useCallback(async (school, range, menu, holiday) => {
+    console.info("handleSearchSchoolScheduleInfo menu = " + menu + " range.startDate = " + range.startDate + "  range.endDate = " + range.endDate + "  holiday = " + holiday);
+
     if (menu === "시간표") {
-      await handleSearchSchoolTimeTable(school, range);
+      await handleSearchSchoolTimeTable(school, range, holiday);
     } else if (menu === "급식식단") {   
-      await handleSearchSchoolLunch(school, range);
+      await handleSearchSchoolLunch(school, range, holiday);
     } else if (menu === "학사일정") { 
       await handleSearchSchoolEvents(school, range);
     }
@@ -480,10 +506,12 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, sc
   };
 
   useEffect(() => {
+    console.warn("SchoolRegisterScreen useEffect isHoliday = " + isHoliday);
+
     if (step === "schoolRegisterComplete" && selectedSchool && selectedMenu) {
-      handleSearchSchoolScheduleInfo(selectedSchool, dateRange, selectedMenu);
+      handleSearchSchoolScheduleInfo(selectedSchool, dateRange, selectedMenu, isHoliday);
     }
-  }, [step, selectedMenu, selectedSchool, dateRange, handleSearchSchoolScheduleInfo]);
+  }, [step, selectedMenu, selectedSchool, dateRange, isHoliday, handleSearchSchoolScheduleInfo]);
 
   return (
     <div className="school-register-screen">
@@ -621,7 +649,7 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, sc
                     <span>시간표를 불러오는 중...</span>
                   </div>
                 ) : timeTableGrid.periods.length === 0 ? (
-                  <p className="school-tab-empty">선택한 기간의 시간표가 없어요.</p>
+                  <p className="school-tab-empty">{ isHoliday === true ? "휴일입니다." : "선택한 기간의 시간표가 없어요." }</p>
                 ) : (
                   <div className="timetable-scroll">
                     <table className="timetable">
@@ -662,7 +690,7 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, sc
                     <span>급식 정보를 불러오는 중...</span>
                   </div>
                 ) : mealByDate.length === 0 ? (
-                  <p className="school-tab-empty">선택한 기간의 급식 정보가 없어요.</p>
+                  <p className="school-tab-empty">{ isHoliday === true ? "휴일입니다." : "선택한 기간의 급식 정보가 없어요." }</p>
                 ) : (
                   <div className="meal-list">
                     {mealByDate.map(({ ymd, meals }) => (

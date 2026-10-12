@@ -23,7 +23,6 @@ import AddLinkButton from "./AddLinkButton";
 import SchoolRegisterScreen from "./SchoolRegisterScreen";
 import AcademyRegisterScreen from "./AcademyRegisterScreen";
 
-
 /* ------------------------------------------------------------
  * 네이티브 브릿지
  * ------------------------------------------------------------ */
@@ -198,11 +197,7 @@ function SignUp() {
   const [currentScreen, setCurrentScreen] = useState({ name: "main"});
 
   const navigateTo = (screenName, params = {}) => {
-    console.info("navigateTo screenName = " + screenName + " params = " + JSON.stringify(params));
-    console.info("navigateTo params.register = " + params?.schoolInfo?.register + " params.SCHUL_NM = " + params?.schoolInfo?.SCHUL_NM);
-
     setCurrentScreen({ name: screenName, ...params });
-    
   };
 
   const goBack = () => {
