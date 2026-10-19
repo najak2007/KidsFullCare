@@ -42,10 +42,15 @@ function initMapKitOnce() {
   window.mapkit._isInitialized = true;
 }
 
-function AcademyAppMap({ address, academyName, handleMapStatus }) {
+function AcademyAppMap({ address, academyName, handleMapStatus, onCoordinate}) {
+  const onCoordinateRef = useRef(onCoordinate);
   const mapDivRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const [status, setStatus] = useState("loading"); // loading | ready | notfound | error
+
+  useEffect(() => {
+    onCoordinateRef.current = onCoordinate;
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -83,6 +88,12 @@ function AcademyAppMap({ address, academyName, handleMapStatus }) {
           }
 
           const { coordinate } = data.results[0];
+          
+          onCoordinateRef.current?.({
+            latitude: coordinate.latitude,
+            longitude: coordinate.longitude,
+          });
+
           const map = mapInstanceRef.current;
 
           map.region = new window.mapkit.CoordinateRegion(

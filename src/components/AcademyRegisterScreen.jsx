@@ -70,6 +70,7 @@ function AcademyRegisterScreen({ onBack, userUid, role, onComplete, screenKey })
   const [selectedAcademy, setSelectedAcademy] = useState(null);
   const [mapStatus, setMapStatus] = useState("loading"); // loading | ready | notfound | error
   const [saving, setSaving] = useState(false);
+  const [geoCoord, setGeoCoord] = useState(null);
 
   const inputRef = useRef(null);
 
@@ -108,6 +109,7 @@ function AcademyRegisterScreen({ onBack, userUid, role, onComplete, screenKey })
       setSearching(true);
       setSearched(false);
       setSearchResults([]);
+      setGeoCoord(null);
 
       try {
         const { data } = await searchAcademyFn({
@@ -141,6 +143,7 @@ function AcademyRegisterScreen({ onBack, userUid, role, onComplete, screenKey })
 
   const handleChangeAcademy = useCallback(() => {
     setStep("search");
+    setGeoCoord(null);
   }, []);
 
   const handleSubmit = useCallback(() => {
@@ -162,6 +165,11 @@ function AcademyRegisterScreen({ onBack, userUid, role, onComplete, screenKey })
       ATPT_OFCDC_SC_NM: selectedAcademy.ATPT_OFCDC_SC_NM ?? "",
       REG_STTUS_NM: selectedAcademy.REG_STTUS_NM ?? "",
       label: selectedAcademy.ACA_NM ?? "",
+      address: selectedSchool.FA_RDNMA ?? "",
+      UID: selectedAcademy.id,
+      latitude: geoCoord.latitude,
+      longitude: geoCoord.longitude,
+      name: selectedAcademy.ACA_NM ?? "",
       register: true,
     });
   }, [selectedAcademy, screenKey, role, userUid]);
@@ -177,6 +185,11 @@ function AcademyRegisterScreen({ onBack, userUid, role, onComplete, screenKey })
 
   const handleMapStatusChange = useCallback((newStatus) => {
     setMapStatus(newStatus);
+  }, []);
+
+  const handleMapSelectedGeocode = useCallback((coord) => {
+    console.log("coord.latitude = " + coord.latitude);
+    setGeoCoord(coord);
   }, []);
 
   return (
@@ -310,6 +323,7 @@ function AcademyRegisterScreen({ onBack, userUid, role, onComplete, screenKey })
               address={selectedAcademy.FA_RDNMA}
               academyName={selectedAcademy.ACA_NM}
               handleMapStatus={handleMapStatusChange}
+              onCoordinate={handleMapSelectedGeocode}
             />
 
             {error && <p className="school-register-error">{error}</p>}

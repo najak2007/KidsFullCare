@@ -95,6 +95,7 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, sc
   const [schoolLunchTable, setSchoolLunchTable] = useState([]);
   const [schoolEventTable, setSchoolEventTable] = useState([]);
   const [isHoliday, setIsHoliday] = useState(true); // 선택한 날짜의 툐/일요일 여부 확인
+  const [geoCoord, setGeoCoord] = useState(null);
 
   const inputRef = useRef(null);
 
@@ -170,6 +171,7 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, sc
     setSearching(true);
     setSearched(false);
     setSearchResults([]);
+    setGeoCoord(null);
 
     console.warn("schoolName" + trimmed);
 
@@ -230,6 +232,7 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, sc
     setSelectedClass("");
     setClassSearchResults([]);
     setClassSearched(false);
+    setGeoCoord(null);
   }, []);
 
   const handleSelectGrade = useCallback((school, grade) => {
@@ -380,6 +383,7 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, sc
   const handleResetGrade = useCallback(() => {
     setSelectedGrade(null);
     setSelectedClass("");
+    setGeoCoord(null);
   }, []);
 
   const handleSubmit = useCallback(() => {
@@ -404,6 +408,11 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, sc
       GRADE: selectedGrade,
       CLASS: selectedClassItem,
       label: selectedSchool.SCHUL_NM ?? "",
+      address: selectedSchool.ORG_RDNMA ?? "",
+      UID: selectedSchool.id,
+      latitude: geoCoord.latitude,
+      longitude: geoCoord.longitude,
+      name: selectedSchool.SCHUL_NM ?? "",
       register: true
     });
   }, [selectedSchool, selectedGrade, selectedClassId, screenKey]);
@@ -420,6 +429,13 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, sc
 
   const handleMapStatusChange = useCallback((newStatus) => {
     setMapStatus(newStatus);
+  }, []);
+
+  const handleMapSelectedGeocode = useCallback((coord) => {
+
+    console.log("handleMapSelectedGeocode " + coord.latitude + " longitude = " + coord.longitude);
+
+    setGeoCoord(coord);
   }, []);
 
   const getGradeNumber = (grade) => parseInt(grade, 10);
@@ -787,6 +803,7 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, sc
               address={selectedSchool.ORG_RDNMA}
               schoolName={selectedSchool.SCHUL_NM}
               handleMapStatus={handleMapStatusChange}
+              onCoordinate={handleMapSelectedGeocode}
             />
 
             {error && <p className="school-register-error">{error}</p>}

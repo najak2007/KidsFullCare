@@ -68,6 +68,7 @@ exports.searchAcademy = onCall(
             FA_RDNZC: row.FA_RDNZC == null ? "" : row.FA_RDNZC,                                     // 도로명우편번호
             FA_TELNO: row.FA_TELNO == null ? "" : row.FA_TELNO,                                     // 전화번호
             LOAD_DTM: row.LOAD_DTM == null ? "" : row.LOAD_DTM,                                     // 수정일자
+            address: row.FA_RDNMA == null ? "" : row.FA_RDNMA,                                      // 도로명주소
         }));
 
         return { results };
