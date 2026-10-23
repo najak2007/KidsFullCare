@@ -4,6 +4,7 @@ import "../css/MainScreen.css";
 import StudentLinkScreen from "./StudentLinkScreen";
 import StudentMenuGrid from "./StudentMenuGrid";
 
+
 function requestNativeProfileImagePicker() {
     if (window.webkit?.messageHandlers?.pickProfileImage) {
         window.webkit.messageHandlers.pickProfileImage.postMessage(null);

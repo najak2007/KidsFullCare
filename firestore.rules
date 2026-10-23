@@ -8,32 +8,48 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // ───────── 헬퍼 함수 ─────────
+
+    // 요청자가 해당 학생 문서의 familyUids에 포함된 연결된 부모인지
     function isLinkedParent(studentUid) {
       return request.auth != null &&
-              request.auth.uid in
-                get(/databases/$(database)/documents/users/$(studentUid)).data.get("familyUids", []);
+             request.auth.uid in
+               get(/databases/$(database)/documents/users/$(studentUid)).data.get("familyUids", []);
     }
 
-    function touchesOnlySchool() {
+    // 변경된 필드가 studentInfo 하나뿐인지
+    function touchesStudentInfo() {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(["studentInfo"]);
     }
 
+    // 클라이언트가 familyUids를 건드리는지 (연결은 Cloud Function만 처리)
+    function touchesFamilyUids() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasAny(["familyUids"]);
+    }
+
+    // ───────── users ─────────
     match /users/{userId} {
-      // 1. 읽기: 본인 로그인 사용자만 허용
-      allow read: if request.auth != null && 
+
+      // 1. 읽기: 본인 또는 연결된 부모
+      allow read: if request.auth != null &&
                     (request.auth.uid == userId || isLinkedParent(userId));
 
-      // 2. 생성 (1단계: Sign in with Apple 완료 후 초기 문서 생성)
-      // role 조건 검증을 제거하여 최초 가입 시 문서가 문제없이 생성되도록 합니다.
-      allow create: if request.auth != null && request.auth.uid == userId;
+      // 2. 생성: 본인만, familyUids는 비어 있거나 없어야 함
+      allow create: if request.auth != null
+                    && request.auth.uid == userId
+                    && (
+                      !("familyUids" in request.resource.data) ||
+                      request.resource.data.familyUids.size() == 0
+                    );
 
       // 3. 수정
-      //   - 본인 문서: role 값은 "parent"/"student"만 허용 (기존 로직 그대로)
-      //   - 연결된 부모: 자녀 문서의 schoolInfo 필드만 수정 가능
+      //   - 본인 문서: role은 "parent"/"student"만 허용, familyUids는 수정 불가
+      //   - 연결된 부모: 자녀 문서의 studentInfo 필드만 수정 가능
       allow update: if request.auth != null
                && (
                  (
                    request.auth.uid == userId
+                   && !touchesFamilyUids()
                    && (
                      !("role" in request.resource.data) ||
                      request.resource.data.role in ["parent", "student"]
@@ -42,47 +58,53 @@ service cloud.firestore {
                  ||
                  (
                    isLinkedParent(userId)
-                   && touchesOnlySchool()
+                   && touchesStudentInfo()
                  )
                );
 
-      // 본인 문서만 삭제 가능 (회원 탈퇴용)
+      // 4. 삭제: 본인만 (회원 탈퇴용)
       allow delete: if request.auth != null && request.auth.uid == userId;
+
+      // ───────── users/{userId}/notifications ─────────
+      // 생성은 Cloud Function(Admin SDK)만 하므로 클라이언트 create는 막음
+      match /notifications/{notiId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+
+        // 읽음 처리(read 필드)만 수정 가능
+        allow update: if request.auth != null
+                      && request.auth.uid == userId
+                      && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["read"]);
+
+        allow create: if false;
+
+        allow delete: if request.auth != null && request.auth.uid == userId;
+      }
     }
 
+    // ───────── linkCodes ─────────
     match /linkCodes/{code} {
-      // 코드는 로그인한 학생 본인만 생성 가능, 문서의 studentUid가 자기 uid와 일치해야 함
+      // 로그인한 학생 본인만 생성, studentUid가 자기 uid와 일치해야 함
       allow create: if request.auth != null
                     && request.resource.data.studentUid == request.auth.uid;
 
-      // 코드 조회는 로그인한 사용자면 누구나 가능 (학부모가 코드로 찾아야 하니까)
+      // 로그인한 사용자면 조회 가능 (학부모가 코드로 찾아야 하므로)
       allow read: if request.auth != null;
 
-      // 사용 처리(used: true, parentUid 등 추가)는 로그인한 사용자면 가능하되
-      // studentUid/createdAt은 못 바꾸게 제한
+      // studentUid/createdAt은 변경 불가
       allow update: if request.auth != null
                     && request.resource.data.studentUid == resource.data.studentUid
                     && request.resource.data.createdAt == resource.data.createdAt;
 
-      // 삭제는 본인만 처리되도록 구현
-      allow delete: if request.auth != null 
-                    && resource.data.studentUid == request.auth.uid; 
-
+      // 삭제는 코드를 만든 학생 본인만
+      allow delete: if request.auth != null
+                    && resource.data.studentUid == request.auth.uid;
     }
 
+    // ───────── profile ─────────
     match /profile/{userId} {
-      // 프로필 셍성은 로그인한 본인만 가능, 문서의 uid와 자기 uid가 일치해야 함 
-      allow create: if request.auth != null 
-                    && request.auth.uid == userId;
-      
-      // 프로필 조회는 로그인한 사용자 누구나 가능
-      allow read: if request.auth != null;
-
-      // 프로필 갱신은 로그인한 본인만 가능, 문서의 uid와 자기 uid가 일치해야 함
-      allow update: if request.auth != null
-                    && request.auth.uid == userId;
-
-      // 프로필 삭제 가능 본인만
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow read:   if request.auth != null;
+      allow update: if request.auth != null && request.auth.uid == userId;
       allow delete: if request.auth != null && request.auth.uid == userId;
     }
   }
