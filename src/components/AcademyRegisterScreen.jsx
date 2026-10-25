@@ -166,7 +166,7 @@ function AcademyRegisterScreen({ onBack, userUid, role, onComplete, screenKey })
       REG_STTUS_NM: selectedAcademy.REG_STTUS_NM ?? "",
       label: selectedAcademy.ACA_NM ?? "",
       address: selectedSchool.FA_RDNMA ?? "",
-      UID: selectedAcademy.id,
+      uid: selectedAcademy.id,
       latitude: geoCoord.latitude,
       longitude: geoCoord.longitude,
       name: selectedAcademy.ACA_NM ?? "",

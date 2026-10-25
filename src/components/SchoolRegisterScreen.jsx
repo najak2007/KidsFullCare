@@ -409,7 +409,7 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, sc
       CLASS: selectedClassItem,
       label: selectedSchool.SCHUL_NM ?? "",
       address: selectedSchool.ORG_RDNMA ?? "",
-      UID: selectedSchool.id,
+      uid: selectedSchool.id,
       latitude: geoCoord.latitude,
       longitude: geoCoord.longitude,
       name: selectedSchool.SCHUL_NM ?? "",

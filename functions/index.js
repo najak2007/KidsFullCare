@@ -69,5 +69,6 @@ exports.searchSchoolClass = require("./searchSchoolClass").searchSchoolClass;
 exports.schoolTimeTable = require("./schoolTimeTable").schoolTimeTable;
 exports.schoolLunch = require("./schoolLunch").schoolLunch;
 exports.schoolEvents = require("./schoolEvents.js").schoolEvents;
+exports.notifyParentsStudentInfo = require("./notifyParents").notifyParentsStudentInfo;
 exports.getMapKitToken = require("./mapkitToken").getMapKitToken;
 exports.mealServiceDietInfo = require("./mealServiceDietInfo").mealServiceDietInfo;
