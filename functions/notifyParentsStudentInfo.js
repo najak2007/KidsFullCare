@@ -3,6 +3,9 @@ const { getFirestore, FieldValue } = require("firebase-admin/firestore");
 const { getMessaging } = require("firebase-admin/messaging");
 
 exports.notifyParentsStudentInfo = onCall({ region: "us-central1" }, async (request) => {
+  const debug = { version: "v3-debug", steps: [] };   // 새 코드가 배포됐는지 구분하는 표식
+  console.log("함수 시작 uid =", request.auth?.uid);
+  
   if (!request.auth) throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
 
   const studentUid = request.auth.uid;   // 클라이언트가 넘긴 uid는 믿지 않고 인증 정보만 사용
@@ -32,14 +35,32 @@ exports.notifyParentsStudentInfo = onCall({ region: "us-central1" }, async (requ
     ].filter(Boolean)),
   ];
 
+  console.log("parentUids = ", parentUids);
   let sent = 0;
+  debug.studentRole = student?.role;
+
   for (const parentUid of parentUids) {
     const parentRef = db.doc(`users/${parentUid}`);
     const parent = (await parentRef.get()).data();
-    if (!parent || parent.role !== "parent") continue;
+
+    if( !parent) {
+      console.log("부모 문서 없음: ", parentUid);
+      debug.steps.push({ parentUid, skip: "no-doc" });
+      continue;
+    }
+
+    if (parent.role !== "parent") {
+      console.log("role 불일치: ", parentUid, parent.role);
+      debug.steps.push({ parentUid, skip: "role", role: parent.role ?? null });
+      continue;
+    }
 
     const tokens = [...new Set([parent.fcmToken, ...(parent.fcmTokens ?? [])].filter(Boolean))];
-    if (tokens.length === 0) continue;
+    if (tokens.length === 0) {
+      console.log("토큰 없음: ", parentUid);
+      debug.steps.push({ parentUid, skip: "no-token" });
+      continue;
+    }
 
     const body = `${schoolName}${grade ? ` ${grade}학년` : ""}${className ? ` ${className}반` : ""}`;
 
@@ -63,7 +84,10 @@ exports.notifyParentsStudentInfo = onCall({ region: "us-central1" }, async (requ
       if (invalid.includes(parent.fcmToken)) updates.fcmToken = FieldValue.delete();
       await parentRef.update(updates);
     }
+
+    debug.steps.push({ parentUid, success: res.successCount, failure: res.failureCount,
+      error: res.responses.find((r) => !r.success)?.error?.code ?? null });
   }
 
-  return { sent };
+  return { sent, debug };
 });
