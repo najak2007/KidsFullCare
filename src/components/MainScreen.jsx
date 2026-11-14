@@ -3,6 +3,7 @@ import { useState, useRef, useCallback, useEffect, useLayoutEffect } from "react
 import "../css/MainScreen.css";
 import StudentLinkScreen from "./StudentLinkScreen";
 import StudentMenuGrid from "./StudentMenuGrid";
+import ParentMenuGrid from "./ParentMenuGrid";
 
 
 function requestNativeProfileImagePicker() {
@@ -305,6 +306,7 @@ function TabBar({ activeTab, onChange }) {
 function MainScreen({
   selfProfile,          // { name, image, role }
   userMembers = [],   // [{ uid, name, image }]
+  linkedStudents = [],  // parent 전용: [{ name, uid, register, studentInfo: { school: [], academy: [] } }]
   todos = [],           // [{ id, title, emoji }]
   hasUnreadNotification = false,
   onAddFamily,
@@ -380,6 +382,16 @@ function MainScreen({
             studentMenus= {studentMenus}
             onSelect={(menu) => {
               onNavigate(menu.key, { schoolInfo: menu });
+            }}
+          />
+        )}
+
+        { currentRole === "parent" && (
+          <ParentMenuGrid
+            linkedStudents={linkedStudents}
+            onSelectSchool={(schoolEntry) => {
+              // 학생이 등록한 학교 → 시간표 / 급식식단 / 학사일정 화면
+              onNavigate("school", { schoolInfo: { ...schoolEntry, register: true } });
             }}
           />
         )}

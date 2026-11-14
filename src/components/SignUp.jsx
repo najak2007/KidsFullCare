@@ -194,6 +194,7 @@ function SignUp() {
   const [addUserName, setAddUserName] = useState(null);
   const [linkResult, setLinkResult] = useState(null);
   const [familyMembers, setFamilyMembers] = useState([]);
+  const [studentInfos, setStudentInfos] = useState([]);   // parent 전용: 연결된 학생별 studentInfo
   const [currentScreen, setCurrentScreen] = useState({ name: "main"});
 
   const navigateTo = (screenName, params = {}) => {
@@ -260,6 +261,7 @@ function SignUp() {
         if (payload.familyMembers) {
           setFamilyMembers(payload.familyMembers);
         }
+        setStudentInfos(Array.isArray(payload.studentInfos) ? payload.studentInfos : []);
         if (payload.userUid) {
           setUserUid(payload.userUid);
         }
@@ -275,6 +277,7 @@ function SignUp() {
         setManualPasswordConfirm("");
         setNotice("");
         setRole(null);
+        setStudentInfos([]);
       } else if (payload.status === "signUp") {
         setRoleSubStep("select");
         setShowManualForm(false);
@@ -554,6 +557,7 @@ function SignUp() {
         <MainScreen 
           selfProfile={{name: name, image: profileImage, role: role}}
           userMembers= {familyMembers}
+          linkedStudents={studentInfos}
           onAddFamily= {handleAddFamilyReq}
           onSendMessageClick= {handleSendMessage}
           onNavigate={navigateTo}
