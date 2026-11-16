@@ -15,6 +15,7 @@ import "../css/SchoolRegisterScreen.css";
 import SchoolAppleMap from "./SchoolAppleMap";
 import DateRangePickerModal, { toYmd } from "../pages/DateRangePickerModal";
 import { formatDateWithChevron } from "../utils/DateExtension";
+import { buildCacheKey, readNativeCache, saveNativeCache, isCacheFresh } from "../utils/nativeCache";
 
 
 const searchSchoolFn = httpsCallable(functions, "searchSchool");
@@ -172,6 +173,7 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, sc
     setSearched(false);
     setSearchResults([]);
     setGeoCoord(null);
+    setSaving(false);
 
     console.warn("schoolName" + trimmed);
 
@@ -255,9 +257,26 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, sc
       return;
     }
 
+    // 같은 학교/학년/반/기간이면 같은 key → 단말에 저장된 값을 먼저 확인합니다.
+    const cacheKey = buildCacheKey("timetable", [
+      school.ATPT_OFCDC_SC_CODE,
+      school.SD_SCHUL_CODE,
+      school.CLASS.GRADE,
+      school.CLASS.CLASS_NM,
+      fromYmd,
+      toYmdValue,
+    ]);
+
     setTimeTableLoading(true);
 
     try {
+      const cached = await readNativeCache(cacheKey);
+      if (cached && Array.isArray(cached.data) && isCacheFresh(cached.savedAt, toYmdValue)) {
+        console.info("시간표: 단말에 저장된 값 사용 key = " + cacheKey);
+        setSchoolTimeTable(cached.data);
+        return;
+      }
+
       const { data } = await schoolTimeTableFn({ 
         eduOfficeCode: school.ATPT_OFCDC_SC_CODE,
         sdSchulCode: school.SD_SCHUL_CODE,
@@ -270,8 +289,29 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, sc
 
       if (data?.errorCode) {
         setSchoolTimeTable([]);
-        } else {
-        setSchoolTimeTable(data?.results || []);
+      } else {
+        const results = data?.results || [];
+        setSchoolTimeTable(results);
+        // 조회 결과가 있을 때만 단말에 저장합니다. (빈 결과/오류는 다음에 다시 조회)
+        if (results.length > 0) {
+          saveNativeCache(cacheKey, results, {
+            eduOfficeCode: school.ATPT_OFCDC_SC_CODE,
+            sdSchulCode: school.SD_SCHUL_CODE,
+            grade: school.CLASS.GRADE,
+            classNm: school.CLASS.CLASS_NM,
+            startDate: fromYmd,
+            endDate: toYmdValue,
+            school: {
+              SCHUL_NM: school.SCHUL_NM ?? "",
+              SCHUL_KND_SC_NM: school.SCHUL_KND_SC_NM ?? "",
+              LCTN_SC_NM: school.LCTN_SC_NM ?? "",
+              FOND_SC_NM: school.FOND_SC_NM ?? "",
+              ORG_RDNMA: school.ORG_RDNMA ?? "",
+              ORG_RDNDA: school.ORG_RDNDA ?? "",
+              ORG_TELNO: school.ORG_TELNO ?? "",
+            },
+          });
+        }
       }
     } catch (err) {
       console.error("학교 시간표 검색 실패: ", err);
@@ -289,20 +329,60 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, sc
       return;
     }
 
+    const today = toYmd(new Date());
+    const fromYmd = range?.startDate || today;
+    const toYmdValue = range?.endDate || today;
+
+    // 급식은 학교 단위라서 학교 코드 + 기간이 같으면 같은 key → 단말에 저장된 값을 먼저 확인합니다.
+    const cacheKey = buildCacheKey("lunch", [
+      school.ATPT_OFCDC_SC_CODE,
+      school.SD_SCHUL_CODE,
+      fromYmd,
+      toYmdValue,
+    ]);
+
     setLunchLoading(true);
 
     try {
+      const cached = await readNativeCache(cacheKey);
+      if (cached && Array.isArray(cached.data) && isCacheFresh(cached.savedAt, toYmdValue)) {
+        console.info("급식식단: 단말에 저장된 값 사용 key = " + cacheKey);
+        setSchoolLunchTable(cached.data);
+        return;
+      }
+
       const { data } = await schoolLunchFn({
         eduOfficeCode: school.ATPT_OFCDC_SC_CODE,
         sdSchulCode: school.SD_SCHUL_CODE,
-        startDate: range?.startDate || toYmd(new Date()),
-        endDate: range?.endDate || toYmd(new Date())
+        startDate: fromYmd,
+        endDate: toYmdValue
       });
 
       if (data?.errorCode) {
         setSchoolLunchTable([]);
       } else {
-        setSchoolLunchTable(data?.results || []);
+        const results = data?.results || [];
+        setSchoolLunchTable(results);
+        // 조회 결과가 있을 때만 단말에 저장합니다. (빈 결과/오류는 다음에 다시 조회)
+        if (results.length > 0) {
+          saveNativeCache(cacheKey, results, {
+            eduOfficeCode: school.ATPT_OFCDC_SC_CODE,
+            sdSchulCode: school.SD_SCHUL_CODE,
+            grade: school.CLASS?.GRADE,
+            classNm: school.CLASS?.CLASS_NM,
+            startDate: fromYmd,
+            endDate: toYmdValue,
+            school: {
+              SCHUL_NM: school.SCHUL_NM ?? "",
+              SCHUL_KND_SC_NM: school.SCHUL_KND_SC_NM ?? "",
+              LCTN_SC_NM: school.LCTN_SC_NM ?? "",
+              FOND_SC_NM: school.FOND_SC_NM ?? "",
+              ORG_RDNMA: school.ORG_RDNMA ?? "",
+              ORG_RDNDA: school.ORG_RDNDA ?? "",
+              ORG_TELNO: school.ORG_TELNO ?? "",
+            },
+          });
+        }
       }
     } catch (err) {
       console.error("학교 급식식단 검색 실패: ", err);
@@ -415,7 +495,7 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, sc
       name: selectedSchool.SCHUL_NM ?? "",
       register: true
     });
-  }, [selectedSchool, selectedGrade, selectedClassId, screenKey]);
+  }, [selectedSchool, selectedGrade, selectedClassId, screenKey, geoCoord]);
 
   // 화면 안에 단계가 있는 경우, 뒤로가기는 우선 이전 단계로 되돌립니다.
   // 검색 단계에서는 실제로 MainScreen으로 나가는 onBack을 호출합니다.
@@ -812,7 +892,7 @@ function SchoolRegisterScreen({ onBack, userUid, role, onComplete, screenKey, sc
               type="button"
               className="school-register-submit-btn"
               onClick={handleSubmit}
-              disabled={!selectedGrade || !selectedClassId || saving || mapStatus !== "ready"}
+              disabled={!selectedGrade || !selectedClassId || saving || mapStatus !== "ready" || !geoCoord }
             >
               {saving ? "등록 중..." : "등록 완료"}
             </button>

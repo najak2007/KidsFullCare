@@ -108,8 +108,11 @@ function AcademyRegisterScreen({ onBack, userUid, role, onComplete, screenKey })
       setError("");
       setSearching(true);
       setSearched(false);
+      setSaving(false);
       setSearchResults([]);
       setGeoCoord(null);
+
+      console.warn("AcademyRegisterScreen handleSearch");
 
       try {
         const { data } = await searchAcademyFn({
@@ -144,6 +147,10 @@ function AcademyRegisterScreen({ onBack, userUid, role, onComplete, screenKey })
   const handleChangeAcademy = useCallback(() => {
     setStep("search");
     setGeoCoord(null);
+    setSaving(false);
+
+    console.warn("AcademyRegisterScreen handleChangeAcademy");
+
   }, []);
 
   const handleSubmit = useCallback(() => {
@@ -165,14 +172,14 @@ function AcademyRegisterScreen({ onBack, userUid, role, onComplete, screenKey })
       ATPT_OFCDC_SC_NM: selectedAcademy.ATPT_OFCDC_SC_NM ?? "",
       REG_STTUS_NM: selectedAcademy.REG_STTUS_NM ?? "",
       label: selectedAcademy.ACA_NM ?? "",
-      address: selectedSchool.FA_RDNMA ?? "",
+      address: selectedAcademy.FA_RDNMA ?? "",
       uid: selectedAcademy.id,
       latitude: geoCoord.latitude,
       longitude: geoCoord.longitude,
       name: selectedAcademy.ACA_NM ?? "",
       register: true,
     });
-  }, [selectedAcademy, screenKey, role, userUid]);
+  }, [selectedAcademy, screenKey, role, userUid, geoCoord]);
 
   // 화면 안에 단계가 있는 경우, 뒤로가기는 우선 이전 단계로 되돌립니다.
   const handleBackPress = useCallback(() => {
@@ -188,7 +195,7 @@ function AcademyRegisterScreen({ onBack, userUid, role, onComplete, screenKey })
   }, []);
 
   const handleMapSelectedGeocode = useCallback((coord) => {
-    console.log("coord.latitude = " + coord.latitude);
+    console.log("coord.latitude = " + coord.latitude + "  longitude = " + coord.longitude);
     setGeoCoord(coord);
   }, []);
 
@@ -332,7 +339,7 @@ function AcademyRegisterScreen({ onBack, userUid, role, onComplete, screenKey })
               type="button"
               className="school-register-submit-btn"
               onClick={handleSubmit}
-              disabled={saving || mapStatus !== "ready"}
+              disabled={saving || mapStatus !== "ready" || !geoCoord }
             >
               {saving ? "등록 중..." : "등록 완료"}
             </button>

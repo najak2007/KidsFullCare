@@ -17,14 +17,27 @@ exports.notifyParentsStudentInfo = onCall({ region: "us-central1" }, async (requ
     throw new HttpsError("permission-denied", "학생 계정만 호출할 수 있습니다.");
   }
 
-  // 전송 내용은 클라이언트 값이 아니라 Firestore에 저장된 값으로 구성 (위조 방지)
-  const schools = student.studentInfo?.school ?? [];
-  const school = schools.find((s) => s.KEY === "school") ?? schools[0];
-  if (!school) return { sent: 0, reason: "no-school" };
+  function getStudentPlace(student, key) {
+    const list = student.studentInfo?.[key] ?? [];
+    return list.find((s) => s.KEY === key) ?? list[list.length - 1];
+  }
 
-  const schoolName = school.SCHUL_NM ?? "학교";
-  const grade = school.CLASS?.GRADE ?? "";
-  const className = school.CLASS?.CLASS_NM ?? "";
+  // 전송 내용은 클라이언트 값이 아니라 Firestore에 저장된 값으로 구성 (위조 방지)
+  //const schools = student.studentInfo?.school ?? [];
+  //const school = schools.find((s) => s.KEY === "school") ?? schools[0];
+
+
+  // if (!school) return { sent: 0, reason: "no-school" };
+
+  // const schoolName = school.SCHUL_NM ?? "학교";
+  // const grade = school.CLASS?.GRADE ?? "";
+  // const className = school.CLASS?.CLASS_NM ?? "";
+  // const studentName = student.displayName ?? "자녀";
+
+  const studentInfo = getStudentPlace(student, s.KEY);
+
+  const infoName = studentInfo.label ?? ""
+  const address = studentInfo.address ?? ""
   const studentName = student.displayName ?? "자녀";
 
   // 부모 uid: family[].uid + familyUids 합집합
@@ -62,11 +75,11 @@ exports.notifyParentsStudentInfo = onCall({ region: "us-central1" }, async (requ
       continue;
     }
 
-    const body = `${schoolName}${grade ? ` ${grade}학년` : ""}${className ? ` ${className}반` : ""}`;
+    const body = `${infoName}${address ? ` ${address}` : ""}`;
 
     const res = await getMessaging().sendEachForMulticast({
       tokens,
-      notification: { title: `${studentName} 학생이 학교를 등록했어요`, body },
+      notification: { title: `${studentName} 학생의 정보가 등록됐어요`, body },
       data: { type: "studentInfoRegistered", studentUid },
       apns: { payload: { aps: { sound: "default" } } },
       android: { priority: "high" },
