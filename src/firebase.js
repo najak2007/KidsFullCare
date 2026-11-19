@@ -27,6 +27,6 @@ export const db = getFirestore(app);
 
 // searchSchool 등 Cloud Functions(2nd gen) 호출용 인스턴스.
 // 주의: 아래 리전은 실제 배포된 함수의 리전과 반드시 일치해야 합니다.
-// 현재 searchSchool은 us-central1로 배포되어 있어서 우선 이렇게 맞춰둡니다.
+// 현재 searchSchool은 asia-northeast3로 배포되어 있어서 우선 이렇게 맞춰둡니다.
 // 나중에 서울 리전(asia-northeast3)으로 재배포하시면 이 값도 함께 바꿔주세요.
-export const functions = getFunctions(app, "us-central1");
+export const functions = getFunctions(app, "asia-northeast3");

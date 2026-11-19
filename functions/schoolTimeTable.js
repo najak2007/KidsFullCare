@@ -9,7 +9,7 @@ const MIDDLE_SCHOOL = "misTimetable";
 const HIGH_SCHOOL = "hisTimetable";
 
 exports.schoolTimeTable = onCall(
-    { secrets: [neisKey], region: "us-central1" }, // firebase.js의 getFunctions(app, "us-central1")과 반드시 일치해야 함
+    { secrets: [neisKey], region: "asia-northeast3" }, // firebase.js의 getFunctions(app, "asia-northeast3")과 반드시 일치해야 함
     async (request) => {
         const eduOfficeCode = (request.data?.eduOfficeCode || "").trim();
         const sdSchulCode = (request.data?.sdSchulCode || "").trim();

@@ -176,7 +176,7 @@ ______________________________________________________________________
 ```yaml
 specVersion: "v1"
 serviceId: "my-service"
-location: "us-central1"
+location: "asia-northeast3"
 schema:
   source: "./schema"
   datasource:

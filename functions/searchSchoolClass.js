@@ -6,7 +6,7 @@ const neisKey = defineSecret("NEIS_KEY");
 const NEIS_BASE_URL = "https://open.neis.go.kr/hub/classInfo";
 
 exports.searchSchoolClass = onCall(
-    { secrets: [neisKey], region: "us-central1" }, // firebase.js의 getFunctions(app, "us-central1")과 반드시 일치해야 함
+    { secrets: [neisKey], region: "asia-northeast3" }, // firebase.js의 getFunctions(app, "asia-northeast3")과 반드시 일치해야 함
     async (request) => {
         const eduOfficeCode = (request.data?.eduOfficeCode || "").trim();
         const sdSchulCode = (request.data?.sdSchulCode || "").trim();

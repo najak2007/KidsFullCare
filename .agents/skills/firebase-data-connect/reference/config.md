@@ -35,7 +35,7 @@ Main SQL Connect service configuration:
 ```yaml
 specVersion: "v1"
 serviceId: "my-service"
-location: "us-central1"
+location: "asia-northeast3"
 schemaValidation: "STRICT" # or "COMPATIBLE"
 schema:
   source: "./schema"
@@ -51,7 +51,7 @@ connectorDirs: ["./connector"]
 | ------------------- | ---------------------------------------------------------------------------------------- |
 | `specVersion`       | Always `"v1"`                                                                            |
 | `serviceId`         | Unique identifier for the service                                                        |
-| `location`          | GCP region (us-central1, us-east4, europe-west1, etc.)                                   |
+| `location`          | GCP region (asia-northeast3, us-east4, europe-west1, etc.)                                   |
 | `schemaValidation`  | Deployment mode: `"STRICT"` (must match exactly) or `"COMPATIBLE"` (backward compatible) |
 | `schema.source`     | Path to schema directory                                                                 |
 | `schema.datasource` | PostgreSQL connection config                                                             |

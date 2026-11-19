@@ -9,7 +9,7 @@ const KEY_ID = "MWJ25H793X"; // .p8 발급 시 받은 Key ID (Maps ID와 다름)
 const MAPS_ID = "9KH64W7EHZ.maps.com.najak.KidsFullCare"; // origin(iss/sub) 확인용
 
 exports.getMapKitToken = onCall(
-  { secrets: [appleMapKitPrivateKey] },
+  { secrets: [appleMapKitPrivateKey], region: "asia-northeast3" },
   async (request) => {
     try {
       const privateKey = appleMapKitPrivateKey.value();

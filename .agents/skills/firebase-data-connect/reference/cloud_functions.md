@@ -27,7 +27,7 @@ cannot be resolved transactionally.
 
 **The Cloud Function region option must match your SQL Connect service
 location.** You **must** explicitly configure the `region` parameter (e.g.,
-`'us-central1'`) in the trigger options to match the `location` specified in
+`'asia-northeast3'`) in the trigger options to match the `location` specified in
 `dataconnect.yaml`.
 
 ```typescript
@@ -72,7 +72,7 @@ export const onUserCreate = onMutationExecuted(
   {
     service: "myAppService",
     operation: "CreateUser",
-    // region: "us-central1" // Optional: defaults to us-central1, change if database is elsewhere
+    // region: "asia-northeast3" // Optional: defaults to asia-northeast3, change if database is elsewhere
   },
   (event) => {
     logger.info("A new user was created!");

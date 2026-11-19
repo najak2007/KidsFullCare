@@ -52,7 +52,7 @@ Serve the same content for multiple URLs, useful for SPAs or Dynamic Content.
     "source": "/container/**",
     "run": {
       "serviceId": "helloworld",
-      "region": "us-central1"
+      "region": "asia-northeast3"
     }
   }
 ]

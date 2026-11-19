@@ -1,8 +1,9 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { getFirestore, FieldValue } = require("firebase-admin/firestore");
 const { getMessaging } = require("firebase-admin/messaging");
+const logger = require("firebase-functions/logger");
 
-exports.notifyParentsStudentInfo = onCall({ region: "us-central1" }, async (request) => {
+exports.notifyParentsStudentInfo = onCall({ region: "asia-northeast3" }, async (request) => {
   const debug = { version: "v3-debug", steps: [] };   // 새 코드가 배포됐는지 구분하는 표식
   console.log("함수 시작 uid =", request.auth?.uid);
   
@@ -34,7 +35,13 @@ exports.notifyParentsStudentInfo = onCall({ region: "us-central1" }, async (requ
   // const className = school.CLASS?.CLASS_NM ?? "";
   // const studentName = student.displayName ?? "자녀";
 
-  const studentInfo = getStudentPlace(student, s.KEY);
+  logger.info("notifyParentsStudentInfo 조회 key = ", request.data?.key);
+
+  const key = request.data?.key ?? "school"; 
+
+  const studentInfo = getStudentPlace(student, key);
+
+  logger.info("studentInfo 조회: ", { studentInfo, key });
 
   const infoName = studentInfo.label ?? ""
   const address = studentInfo.address ?? ""
@@ -75,7 +82,7 @@ exports.notifyParentsStudentInfo = onCall({ region: "us-central1" }, async (requ
       continue;
     }
 
-    const body = `${infoName}${address ? ` ${address}` : ""}`;
+    const body = `${infoName}${address ? `\n${address}` : ""}`;
 
     const res = await getMessaging().sendEachForMulticast({
       tokens,
